@@ -1,0 +1,21 @@
+{
+  "meteor": {},
+  "dependencies": {
+    "basePackages": {
+      "iron-router": {},
+      "bootstrap-themes": {}
+    },
+    "packages": {
+      "iron-router": {
+        "git": "https://github.com/EventedMind/iron-router.git",
+        "tag": "v0.6.2",
+        "commit": "ce56e58b45624dce992490f3a1c10f10d3948bae"
+      },
+      "bootstrap-themes": {
+        "git": "https://github.com/eprochasson/meteor-bootstrap-themes",
+        "tag": "v0.0.5",
+        "commit": "7b711bd22646db199662bc05fea1df6ad5cc4c22"
+      }
+    }
+  }
+}

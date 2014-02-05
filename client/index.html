@@ -1,0 +1,45 @@
+<template name="index">
+  <div class="row-fluid" style="height:100%">
+    <div class="span3">
+      {{> services}}
+    </div>
+    <div class="span6" style="height:100%">
+      {{> mapIndex}}
+    </div>
+    <div class="span3">
+      {{> display}}
+    </div>
+  </div>
+</template>
+
+<template name="services">
+  <div class="serviceBox titleBox selected">
+    <div class="row-fluid">
+      <div class="span8">
+        Services
+      </div>
+    </div>
+  </div>
+  {{#each services}}
+  <div class="serviceBox selected" color={{color}}>
+    <div class="row-fluid">
+      <div class="span8">
+        {{name}}
+      </div>
+      <div class="pull-right">
+        {{count}}
+      </div>
+    </div>
+  </div>
+  {{/each}}
+</template>
+
+<template name="mapIndex">
+  <div id="map" style="height:100%">
+    <div id="mapCanvas">
+    </div>
+  </div>
+</template>
+
+<template name="display">
+</template>
