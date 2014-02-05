@@ -8,19 +8,13 @@ Session.set('resources', null);
 Deps.autorun(function() {
     Meteor.subscribe('resourcesFromServices', Session.get('services'), function() {
         var resources = Resources.find({}).fetch();
-//         _.each(Session.get('services'), function(service) {
+        Session.set('resources', resources);
+    });
 
-//         Session.set('resources'
-});
-
-var servicesHandle = Meteor.subscribe('services', function() {
-    var services = Services.find({}, {sort:{name:1}, limit:5}).fetch();
-    Session.set('services', services);
-});
-
-var resourcesHandle = Meteor.subscribe('resourcesFromServices', function(service_id_array) {
-    var resources = Resources.find({}).fetch();
-    Session.set('resources', resources);
+    Meteor.subscribe('services', function() {
+        var services = Services.find({}, {sort:{name:1}, limit:5}).fetch();
+        Session.set('services', services);
+    });
 });
 
 Router.map(function() {
@@ -54,17 +48,25 @@ Template.mapIndex.rendered = function() {
     Deps.autorun(function() {
         var resources = Resources.find().fetch();
         _.each(resources, function(resource) {
-            if (typeof resource.lat !== 'undefined' &&
-                typeof resource.lng !== 'undefined') {
-                var objMarker = {id:resource._id, title:resource.name,
-                                 lat:resource.lat, lng:resource.lng};
-            }
-            if (!map.markerExists('id', objMarker.id)) {
-                map.addMarker(objMarker);
-            }
+            addMarker(resource);
         });
+        if (map.markers.length > 0) {
+            map.calcBounds();
+        }
     });
 }
+
+addMarker = function(resource) {
+    if (typeof resource.lat !== 'undefined' &&
+        typeof resource.lng !== 'undefined') {
+        if (map.markerExists(resource._id)) {
+            map.addExistingMarker(resource);
+        } else {
+            map.addNewMarker({id:resource._id, title:resource.name,
+                              lat:resource.lat, lng:resource.lng});
+        }
+    }
+};
 
 Template.mapIndex.destroyed = function() {
     Session.set('map', false);
@@ -108,25 +110,51 @@ var addAllSelected = function() {
     });
 }
 
+removeMarker = function(resource) {
+    map.removeMarker(resource);
+};
+
+addExistingMarker = function(resource) {
+    map.addExistingMarker(resource);
+};
+
 Template.services.events({
     'click .serviceBox': function(e, tmpl) {
         var box = $(e.target).closest('.serviceBox');
         if (box.hasClass('titleBox')) {
             if (box.hasClass('selected')) {
                 removeAllSelected();
-                //update maps to exclude everything
+                _.each(Session.get('resources'), function(resource) {
+                    removeMarker(resource);
+                });
             } else {
                 addAllSelected();
-                //update maps to include everything
+                _.each(Session.get('resources'), function(resource) {
+                    addExistingMarker(resource);
+                });
             }
         } else if (box.hasClass('selected')) {
             box.removeClass('selected');
+            adjustMapDisplay(box, removeMarker);
             box.css('background-color', '#fff');
-            //update maps to exclude this one
         } else {
             box.addClass('selected');
+            adjustMapDisplay(box, addExistingMarker);
             box.css('background-color', box.attr('color'));
-            //update maps to include this one
         }
-    },
+    }
 });
+
+adjustMapDisplay = function(box, f) {
+    var color = box.attr('color');
+    var colorIndex = colors.indexOf(color);
+    var services = Session.get('services');
+    if (colorIndex != -1 && colorIndex < services.length) {
+        var service = Session.get('services')[colorIndex];
+        _.each(Session.get('resources'), function(resource) {
+            if (resource.services.indexOf(service._id) != -1) {
+                f(resource);
+            }
+        });
+    }
+};
