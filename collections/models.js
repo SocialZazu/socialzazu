@@ -3,7 +3,7 @@
 // Resources are social services like Therapists, Treatment Centers, Food Banks, etc -
 //    {name:String, url:String, street:e.g. "18th St", streetNumber:e.g. "2500", phone:String,
 //     email:String, contactPerson:String, shortDescription:String, longDescription:String,
-//     services:[service_id], lat:String, longitude:Number, nameRoute:String, city:String, state:String, zipcode:String}
+//     services:[service_id], lat:String, lng:Number, nameRoute:String, city:String, state:String, zipcode:String}
 Resources = new Meteor.Collection('resources');
 
 // Clients are people who use the social services. Need to implement
