@@ -4,6 +4,7 @@ Accounts.ui.config({
 
 Session.set('services', null);
 Session.set('resources', null);
+Session.set('displayResource', null);
 
 Deps.autorun(function() {
     Meteor.subscribe('resourcesFromServices', Session.get('services'), function() {
@@ -12,7 +13,7 @@ Deps.autorun(function() {
     });
 
     Meteor.subscribe('services', function() {
-        var services = Services.find({}, {sort:{name:1}, limit:5}).fetch();
+        var services = Services.find({}, {sort:{name:1}, limit:10}).fetch();
         Session.set('services', services);
     });
 });
@@ -40,6 +41,20 @@ Template.base.rendered = function() {
     $('#signup-link').hide();
 };
 
+initializeMapSearch = function() {
+    var input = document.getElementById('searchMapField');
+    var autocomplete = new google.maps.places.Autocomplete(input, {types:['geocode']});
+    google.maps.event.addListener(autocomplete, 'place_changed', function() {
+        var place = autocomplete.getPlace();
+        if (place.geometry) {
+            map.panTo(place.geometry.location);
+            map.setZoom(14);
+        } else {
+            input.placeholder = 'Change Location';
+        }
+    });
+};
+
 Template.mapIndex.rendered = function() {
     if (!Session.get('map')) {
         map.initializeMap();
@@ -54,6 +69,18 @@ Template.mapIndex.rendered = function() {
             map.calcBounds();
         }
     });
+
+    var h = $('#servicesIndex').height()
+    $('#map').css("height", h);
+}
+
+Template.searchMap.rendered = function() {
+    initializeMapSearch();
+    $('#searchMapField').outerWidth($('#map').width());
+}
+
+Template.searchServices.rendered = function() {
+    $('#searchServicesField').outerWidth($('#titleBox').width());
 }
 
 addMarker = function(resource) {
@@ -72,7 +99,8 @@ Template.mapIndex.destroyed = function() {
     Session.set('map', false);
 };
 
-var colors = ["#74F0F2", "#B3F2C2", "#DCFA9B", "#FABDFC", "#BDC9FC"];
+var colors = ["#74F0F2", "#B3F2C2", "#DCFA9B", "#FABDFC", "#F5A2AD",
+              "#BDC9FC", "#A2B2F5", "#F5E1A2", "#AEF5A2", "#42F55D"];
 
 Template.services.rendered = function() {
     addAllSelected();
@@ -158,3 +186,24 @@ adjustMapDisplay = function(box, f) {
         });
     }
 };
+
+Template.searchResources.rendered = function() {
+    $('#searchResources').outerWidth($('#displayIndex').width());
+};
+
+Template.displayIndex.resource = function() {
+    return Session.get('displayResource');
+};
+
+Template.displayIndex.services = function() {
+    resource = Session.get('displayResource');
+    if (resource) {
+        return Services.find({_id:{$in:resource.services}});
+    }
+};
+
+Meteor.startup = function() {
+    $(window).resize(function(evt) {
+        //do something with positioning
+    });
+}
