@@ -3,7 +3,8 @@
   "dependencies": {
     "basePackages": {
       "iron-router": {},
-      "bootstrap-themes": {}
+      "bootstrap-themes": {},
+      "typeahead": {}
     },
     "packages": {
       "iron-router": {
@@ -15,6 +16,11 @@
         "git": "https://github.com/eprochasson/meteor-bootstrap-themes",
         "tag": "v0.0.5",
         "commit": "7b711bd22646db199662bc05fea1df6ad5cc4c22"
+      },
+      "typeahead": {
+        "git": "https://github.com/sergeyt/meteor-typeahead.git",
+        "tag": "v0.0.2",
+        "commit": "e4373dcf01a28c000ec5782bfd85202182021e96"
       }
     }
   }

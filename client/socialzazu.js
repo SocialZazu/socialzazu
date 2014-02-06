@@ -5,6 +5,7 @@ Accounts.ui.config({
 Session.set('services', null);
 Session.set('resources', null);
 Session.set('displayResource', null);
+Session.set('searchServicesDatums', []);
 
 Deps.autorun(function() {
     Meteor.subscribe('resourcesFromServices', Session.get('services'), function() {
@@ -13,8 +14,15 @@ Deps.autorun(function() {
     });
 
     Meteor.subscribe('services', function() {
-        var services = Services.find({}, {sort:{name:1}, limit:10}).fetch();
+        //change this later to be the preferred ones on the front page, not the most count
+        var services = Services.find({}, {sort:{count:0}, limit:10}).fetch();
         Session.set('services', services);
+
+        var searchServicesDatums = [];
+        _.each(Services.find({}).fetch(), function(service) {
+            searchServicesDatums.push({value:service.name, nameRoute:service.nameRoute, count:service.count});
+        });
+        Session.set('searchServicesDatums', searchServicesDatums);
     });
 });
 
@@ -80,7 +88,12 @@ Template.searchMap.rendered = function() {
 }
 
 Template.searchServices.rendered = function() {
-    $('#searchServicesField').outerWidth($('#titleBox').width());
+    $('#searchServicesField').outerWidth($('#servicesIndex').width());
+    $('#searchServicesField').typeahead({
+        local:Session.get('searchServicesDatums'),
+    }).on('typeahead:selected', function(event, datum) {
+        Router.go('/service/' + datum.nameRoute);
+    });
 }
 
 addMarker = function(resource) {
@@ -188,7 +201,7 @@ adjustMapDisplay = function(box, f) {
 };
 
 Template.searchResources.rendered = function() {
-    $('#searchResources').outerWidth($('#displayIndex').width());
+    $('#searchResourcesField').outerWidth($('#displayIndex').width());
 };
 
 Template.displayIndex.resource = function() {
