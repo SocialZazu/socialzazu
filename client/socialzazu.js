@@ -5,14 +5,18 @@ Accounts.ui.config({
 Session.set('services', null);
 Session.set('resources', null);
 Session.set('displayResource', null);
+Session.set('mapResources', []);
 Session.set('searchServicesDatums', []);
 Session.set('flagsFromUser', []);
+Session.set('bounded', false);
 
 Deps.autorun(function() {
     Meteor.subscribe('resourcesFromServices', Session.get('services'), function() {
         var resources = Resources.find({}).fetch();
         Session.set('resources', resources);
     });
+
+    Meteor.subscribe('resourcesFromMap', Session.get('mapResources'));
 
     Meteor.subscribe('services', function() {
         //change this later to be the preferred ones on the front page, not the most count
@@ -107,6 +111,9 @@ initializeMapSearch = function() {
 Template.mapIndex.rendered = function() {
     if (!Session.get('map')) {
         map.initializeMap();
+        google.maps.event.addListener(map.map, 'bounds_changed', function() {
+            Session.set('mapResources', map.markersInBounds());
+        });
     }
 
     Deps.autorun(function() {
@@ -114,8 +121,9 @@ Template.mapIndex.rendered = function() {
         _.each(resources, function(resource) {
             addMarker(resource);
         });
-        if (map.markers.length > 0) {
+        if (!Session.get('bounded') && map.markers.length > 0) {
             map.calcBounds();
+            Session.set('bounded', true);
         }
     });
 
@@ -194,6 +202,12 @@ var addAllSelected = function() {
 
 removeMarker = function(resource) {
     map.removeMarker(resource);
+    var index = Session.get('mapResources').indexOf(resource._id);
+    if (index > -1) {
+        var mapResources = Session.get('mapResources');
+        mapResources.splice(index, 1);
+        Session.set('mapResources', mapResources);
+    }
 };
 
 addExistingMarker = function(resource) {
@@ -292,6 +306,17 @@ Template.user_loggedin.events({
         });
     }
 });
+
+Template.showMapResources.hasMapResources = function() {
+    console.log('has map res');
+    console.log(Session.get('mapResources'));
+    return Session.get('mapResources').length > 0;
+}
+
+Template.showMapResources.mapResources = function() {
+    var ids = Session.get('mapResources');
+    return Resources.find({_id:{$in:ids}});
+}
 
 Meteor.startup = function() {
     $(window).resize(function(evt) {

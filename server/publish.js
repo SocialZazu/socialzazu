@@ -6,6 +6,10 @@ Meteor.publish('resources', function() {
     return Resources.find({}, {fields: {contactPerson:false}});
 });
 
+Meteor.publish('resourcesFromMap', function(ids) {
+    return Resources.find({_id:{$in:ids}});
+});
+
 Meteor.publish('resourcesFromServices', function(services) {
     service_ids = [];
     _.each(services, function(service) {

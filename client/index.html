@@ -96,14 +96,18 @@
     </div>
     {{/with}}
   {{else}}
-    {{> welcome}}
+    {{> showMapResources}}
   {{/if}}
 </template>
 
-<template name="welcome">
-  <div class="row-fluid">
-    Welcome to Social Zazu
-  </div>
+<template name="showMapResources">
+  {{#if hasMapResources }}
+    {{#each mapResources}}
+      {{> resourceContact}}
+    {{/each}}
+  {{else}}
+    <p>Nothing to see here</p>
+  {{/if}}
 </template>
 
 <template name="resourceContact">
