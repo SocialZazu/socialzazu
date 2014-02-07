@@ -7,6 +7,7 @@ Session.set('resources', null);
 Session.set('displayResource', null);
 Session.set('mapResources', []);
 Session.set('searchServicesDatums', []);
+Session.set('searchResourcesDatums', []);
 Session.set('flagsFromUser', []);
 Session.set('bounded', false);
 
@@ -16,7 +17,7 @@ Deps.autorun(function() {
         Session.set('resources', resources);
     });
 
-    Meteor.subscribe('resourcesFromMap', Session.get('mapResources'));
+    Meteor.subscribe('resourcesFromIDs', Session.get('mapResources'));
 
     Meteor.subscribe('services', function() {
         //change this later to be the preferred ones on the front page, not the most count
@@ -28,6 +29,16 @@ Deps.autorun(function() {
             searchServicesDatums.push({value:service.name, nameRoute:service.nameRoute, count:service.count});
         });
         Session.set('searchServicesDatums', searchServicesDatums);
+    });
+
+    //at some point, we'll be giving this a location.
+    Meteor.subscribe('resourcesNearMe', function() {
+        var searchResourcesDatums = [];
+        Resources.find({}).forEach(function(resource) {
+            searchResourcesDatums.push({value:resource.name, nameRoute:resource._id});
+        });
+        console.log(searchResourcesDatums);
+        Session.set('searchResourcesDatums', searchResourcesDatums);
     });
 
     Meteor.subscribe('flagsFromUser', Meteor.userId(), function() {
@@ -111,21 +122,33 @@ initializeMapSearch = function() {
 Template.mapIndex.rendered = function() {
     if (!Session.get('map')) {
         map.initializeMap();
-        google.maps.event.addListener(map.map, 'bounds_changed', function() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                var center = new google.maps.LatLng(position.coords.latitude,
+                                                    position.coords.longitude);
+                if(center) {
+                    map.panTo(center);
+                }
+            });
+        }
+        google.maps.event.addListener(map.gmap, 'bounds_changed', function() {
             Session.set('mapResources', map.markersInBounds());
         });
     }
 
-    Deps.autorun(function() {
-        var resources = Resources.find().fetch();
-        _.each(resources, function(resource) {
-            addMarker(resource);
+    if (!Session.get('bounded')) {
+        Deps.autorun(function() {
+            var resources = Resources.find().fetch();
+            _.each(resources, function(resource) {
+                addMarker(resource);
+            });
+            if (map.markers.length > 0) {
+                var bounds = map.calcBounds();
+                map.gmap.fitBounds(bounds);
+                Session.set('bounded', true);
+            }
         });
-        if (!Session.get('bounded') && map.markers.length > 0) {
-            map.calcBounds();
-            Session.set('bounded', true);
-        }
-    });
+    }
 
     var h = $('#servicesIndex').height()
     $('#map').css("height", h);
@@ -138,6 +161,7 @@ Template.searchMap.rendered = function() {
 
 Template.searchServices.rendered = function() {
     $('#searchServicesField').outerWidth($('#servicesIndex').width());
+    console.log(Session.get('searchServicesDatums'));
     $('#searchServicesField').typeahead({
         local:Session.get('searchServicesDatums'),
     }).on('typeahead:selected', function(event, datum) {
@@ -202,9 +226,9 @@ var addAllSelected = function() {
 
 removeMarker = function(resource) {
     map.removeMarker(resource);
-    var index = Session.get('mapResources').indexOf(resource._id);
+    var mapResources = Session.get('mapResources');
+    var index = mapResources.indexOf(resource._id);
     if (index > -1) {
-        var mapResources = Session.get('mapResources');
         mapResources.splice(index, 1);
         Session.set('mapResources', mapResources);
     }
@@ -257,6 +281,11 @@ adjustMapDisplay = function(box, f) {
 
 Template.searchResources.rendered = function() {
     $('#searchResourcesField').outerWidth($('#displayIndex').width());
+    $('#searchResourcesField').typeahead({
+        local:Session.get('searchResourcesDatums'),
+    }).on('typeahead:selected', function(event, datum) {
+        Router.go('/resource/' + datum.nameRoute);
+    });
 };
 
 Template.displayIndex.resource = function() {
@@ -308,8 +337,6 @@ Template.user_loggedin.events({
 });
 
 Template.showMapResources.hasMapResources = function() {
-    console.log('has map res');
-    console.log(Session.get('mapResources'));
     return Session.get('mapResources').length > 0;
 }
 

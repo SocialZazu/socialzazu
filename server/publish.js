@@ -6,8 +6,13 @@ Meteor.publish('resources', function() {
     return Resources.find({}, {fields: {contactPerson:false}});
 });
 
-Meteor.publish('resourcesFromMap', function(ids) {
+Meteor.publish('resourcesFromIDs', function(ids) {
     return Resources.find({_id:{$in:ids}});
+});
+
+//change to using location
+Meteor.publish('resourcesNearMe', function() {
+    return Resources.find({});
 });
 
 Meteor.publish('resourcesFromServices', function(services) {

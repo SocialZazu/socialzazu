@@ -15,7 +15,9 @@
       {{> services}}
     </div>
     <div class="span5" style="height:100%; margin-left:20px">
+      {{#constant}}
       {{> mapIndex}}
+      {{/constant}}
     </div>
     <div class="span4" style="margin-left:20px" id="displayIndex">
       {{> displayIndex}}
@@ -63,7 +65,7 @@
 </template>
 
 <template name="searchResources">
-  <input id="searchResourcesField" type="text" size="200" placeholder="Search Resources">
+  <input id="searchResourcesField" class="form-control" type="text" size="200" placeholder="Search Resources">
 </template>
 
 <template name="displayIndex">
