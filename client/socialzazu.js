@@ -1,11 +1,12 @@
 Accounts.ui.config({
-    passwordSignupFields: 'USERNAME_AND_OPTIONAL_EMAIL'
+    passwordSignupFields: 'EMAIL_ONLY'
 });
 
 Session.set('services', null);
 Session.set('resources', null);
 Session.set('displayResource', null);
 Session.set('searchServicesDatums', []);
+Session.set('flagsFromUser', []);
 
 Deps.autorun(function() {
     Meteor.subscribe('resourcesFromServices', Session.get('services'), function() {
@@ -24,30 +25,70 @@ Deps.autorun(function() {
         });
         Session.set('searchServicesDatums', searchServicesDatums);
     });
+
+    Meteor.subscribe('flagsFromUser', Meteor.userId(), function() {
+        if (!Meteor.userId()) {
+            Session.set('flagsFromUser', []);
+        } else {
+            var flag_resource_ids = [];
+            Flags.find().forEach(function(flag) {
+                    flag_resource_ids.push(flag.resource_id);
+            });
+            Session.set('flagsFromUser', flag_resource_ids);
+        }
+    });
 });
+
+hasEditorPermission = function(user) {
+    if (!user || !user.profile) {
+        return false;
+    }
+
+    role = user.profile.role
+    if (role == "admin" || role == "approved") {
+        return true;
+    } else {
+        return false;
+    }
+};
 
 Router.map(function() {
     this.route('index', { //Shows map of where you are + commonly-searched resources around you
         path:'/',
-        layoutTemplate:'base',
     });
     this.route('resource', {  //Information about particular resource
         path:'/resource/:_id',
-        layoutTemplate:'base'
     });
     this.route('service', {   //Service of Resources, e.g. Treatment Center
         path:'/service/:nameRoute',
-        layoutTemplate:'base'
     });
-    this.route('input', { //Backend input for Highland Workers
-        path:'/input',
-        layoutTemplate:'base'
+    this.route('editor', { //Backend input for Highland Workers
+        path:'/editor',
+        waitOn: function() {
+            return Meteor.subscribe('services');
+        },
+        before: function() {
+            if (!hasEditorPermission(Meteor.user())) {
+                this.stop();
+            } else {
+                Session.set('services', Services.find({}).fetch());
+            }
+        },
     });
 });
 
+Router.configure({
+    notFoundTemplate:'notFound',
+    layoutTemplate:'base'
+})
+
 Template.base.rendered = function() {
-    $('#signup-link').hide();
-};
+    $('input').height(25);
+}
+
+Template.base.hasEditorPermission = function() {
+    return hasEditorPermission(Meteor.user());
+}
 
 initializeMapSearch = function() {
     var input = document.getElementById('searchMapField');
@@ -214,6 +255,43 @@ Template.displayIndex.services = function() {
         return Services.find({_id:{$in:resource.services}});
     }
 };
+
+Template.displayIndex.flagOn = function() {
+    flagsFromUser = Session.get('flagsFromUser');
+    if (flagsFromUser.indexOf(Session.get('displayResource')._id) > -1) {
+        return 'red';
+    } else {
+        return '';
+    }
+}
+
+Template.displayIndex.events({
+    'click .flag': function(e, tmpl) {
+        flag = $(tmpl.find('.glyphicon-flag'));
+        if (!flag.hasClass('red')) {
+            Meteor.call("flagResource", $('.flag')[0].id, Meteor.userId());
+            if (!Meteor.userId()) { //should auto add if there is a userId
+                flag.addClass('red');
+            }
+        }
+    }
+});
+
+Template.user_loggedout.events({
+    "click #login": function(e, tmpl) {
+        Meteor.loginWithPassword()
+    }
+})
+
+Template.user_loggedin.events({
+    "click #logout": function(e, tmpl) {
+        Meteor.logout(function(err) {
+            if (err) {
+                console.log(err);
+            }
+        });
+    }
+});
 
 Meteor.startup = function() {
     $(window).resize(function(evt) {

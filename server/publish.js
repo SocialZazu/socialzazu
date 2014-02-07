@@ -13,3 +13,12 @@ Meteor.publish('resourcesFromServices', function(services) {
     });
     return Resources.find({services:{$in:service_ids}}, {fields: {contactPerson:false}});
 });
+
+Meteor.publish('flagsFromUser', function(user_id) {
+    if (!user_id) {
+        return null;
+    } else {
+        flag_ids = [];
+        return Flags.find({open:true, user_id:user_id});
+    }
+});

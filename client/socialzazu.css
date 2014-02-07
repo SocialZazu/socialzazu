@@ -77,3 +77,11 @@ html {
     display: block;
     padding: 3px 20px;
 }
+
+.red, .red a {
+  color: #EB1E2C;
+}
+
+input {
+  height: 34px;
+}

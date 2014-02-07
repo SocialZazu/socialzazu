@@ -11,11 +11,14 @@
           <span class="icon-bar"></span>
         </a>
         <a class="brand" href="{{pathFor 'index'}}">SocialZazu</a>
-        <div class="pull-right" style="margin-top:10px; margin-right:65px;">
-          <ul class="nav pull-right">
-            {{loginButtons align="right"}}
-          </ul>
+        <div class="pull-right">
+          <ul id="loginButtons" class="nav">{{loginButtons}}</ul>
         </div>
+        {{#if hasEditorPermission}}
+        <div class="pull-right">
+          <ul id="editorLink" class="nav"><a href="{{urlFor 'editor'}}">Editor</a></ul>
+        </div>
+        {{/if}}
       </div>
     </div>
     <div class="row-fluid" style="height:100%">
@@ -28,4 +31,6 @@
   </footer>
 </template>
 
-
+<template name="notFound">
+  <p style="margin:auto; text-align:center; width:50%">We didn't find anything. Also, this page is not fleshed out. Please go back; I'm embarrased.</p>
+</template>
