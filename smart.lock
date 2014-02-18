@@ -3,10 +3,10 @@
   "dependencies": {
     "basePackages": {
       "iron-router": {},
-      "bootstrap-themes": {},
       "typeahead": {},
-      "bootstrap-3": {},
-      "accounts-ui-bootstrap-3": {}
+      "roles": {},
+      "accounts-entry": {},
+      "bootstrap-themes": {}
     },
     "packages": {
       "iron-router": {
@@ -14,25 +14,30 @@
         "tag": "v0.6.2",
         "commit": "ce56e58b45624dce992490f3a1c10f10d3948bae"
       },
-      "bootstrap-themes": {
-        "git": "https://github.com/eprochasson/meteor-bootstrap-themes",
-        "tag": "v0.0.5",
-        "commit": "7b711bd22646db199662bc05fea1df6ad5cc4c22"
-      },
       "typeahead": {
         "git": "https://github.com/sergeyt/meteor-typeahead.git",
         "tag": "v0.0.5",
         "commit": "7cfd5b5509f431cbbe4f779552417a0e3dbdf4a5"
       },
-      "bootstrap-3": {
-        "git": "https://github.com/mangasocial/meteor-bootstrap-3.git",
-        "tag": "v3.1.0-1",
-        "commit": "329dccb08bfc18c635676dea600ac9953162cda9"
+      "roles": {
+        "git": "https://github.com/alanning/meteor-roles.git",
+        "tag": "v1.2.6",
+        "commit": "f2a9058281f8f2fe028767841d7445aadd6893cf"
       },
-      "accounts-ui-bootstrap-3": {
-        "git": "https://github.com/mangasocial/meteor-accounts-ui-bootstrap-3.git",
-        "tag": "v0.2.4",
-        "commit": "cdbd20eb065310c0cc302bbd5f22e5b2121c769a"
+      "accounts-entry": {
+        "git": "https://github.com/BeDifferential/accounts-entry.git",
+        "tag": "v0.5.3",
+        "commit": "20641be951a1a2e563cd2e6bf552f2cc8fe03984"
+      },
+      "bootstrap-themes": {
+        "git": "https://github.com/eprochasson/meteor-bootstrap-themes",
+        "tag": "v0.0.5",
+        "commit": "7b711bd22646db199662bc05fea1df6ad5cc4c22"
+      },
+      "just-i18n": {
+        "git": "https://github.com/subhog/meteor-just-i18n.git",
+        "tag": "v0.1.1",
+        "commit": "ce88ac66c0dc107dc2da93ce152616115838101f"
       }
     }
   }

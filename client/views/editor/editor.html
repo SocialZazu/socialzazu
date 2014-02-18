@@ -1,0 +1,65 @@
+<template name="editor">
+  <div class="container">
+    <div class="row">
+      <form class="form-horizontal">
+        <fieldset>
+          <!-- type of service select -->
+          <div class="control-group">
+            <label class="control-label">Service Category</label>
+            <div class="controls">
+              <select id="service" name="service" class="input-xlarge">
+                <option value="" selected="selected">Please Select a Category</option>
+                {{#each categories}}
+                <option value="{{_id}}">{{name}}</option>
+                {{/each}}
+              </select>
+            </div>
+          </div>
+
+          <!-- this will adjust depending on the category chosen above -->
+          <div id="inputFields" style="display:none">
+            {{#with selected_category}}
+            <h2>{{category_name}}</h2>
+            {{> category_input_fields}}
+            {{/with}}
+          </div>
+
+
+          <h2>Address</h2>
+          <div class="control-group">
+            <label class="control-label">Full Name</label>
+            <div class="controls">
+              <input id="full-name" name="full-name" type="text" placeholder="full name"
+                     class="input-xlarge">
+              <p class="help-block"></p>
+            </div>
+          </div>
+          <!-- address-line1 input-->
+          <div class="control-group">
+            <label class="control-label">Address Line 1</label>
+            <div class="controls">
+              <input id="address-line1" name="address-line1" type="text" placeholder="address line 1"
+                     class="input-xlarge">
+              <p class="help-block">Street address, P.O. box, company name, c/o</p>
+            </div>
+          </div>
+        </fieldset>
+
+        <button id="submitResource" type="submit" class="btn btn-default">Submit</button>
+      </form>
+    </div>
+  </div>
+</template>
+
+<template name="category_input_fields">
+  {{#each fields}}
+  <div class="control-group">
+    <label class="control-label">{{field_name}}</label>
+    <div class="controls">
+      <input id="{{field_id}}" name="address-line1" type="text" placeholder="{{field_name}}"
+             class="input-xlarge">
+      <p class="help-block">{{type_expected}}: {{field_example}}</p>
+    </div>
+  </div>
+  {{/each}}
+</template>

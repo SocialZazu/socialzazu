@@ -1,12 +1,4 @@
-body {
-    height:100%;
-}
-
-html {
-    height:100%;
-}
-
-#mapCanvas {
+#map_canvas, body, html {
     width: 100%;
     height: 100%;
 }
@@ -59,10 +51,6 @@ html {
 	-ms-transform: skew(5deg) rotate(5deg);
 	-o-transform: skew(5deg) rotate(5deg);
 	transform: skew(5deg) rotate(5deg);
-}
-
-.twitter-typeahead {
-    width: 100%;
 }
 
 .tt-dropdown-menu {

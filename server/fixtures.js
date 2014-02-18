@@ -9,6 +9,7 @@ Meteor.startup(function() {
         var service_employment = Services.insert({name:'Employment Help', count:0, resources:[], nameRoute:'Employment-Help', creation_time:timestamp, updated_time:timestamp});
         var service_emergency_shelter_id = Services.insert({name:'Emergency Shelter', count:0, resources:[], nameRoute:'Emergency-Shelter', creation_time:timestamp, updated_time:timestamp});
         var service_free_dental = Services.insert({name:'Free Dental', count:0, resources:[], nameRoute:'Free-Dental', creation_time:timestamp, updated_time:timestamp});
+        var service_medical_care = Services.insert({name:'Medical Care', count:0, resources:[], nameRoute:'Medical-Care', creation_time:timestamp, updated_time:timestamp});
 
         var epiphany_id = Resources.insert(
             {name:'Epiphany House', street:'Broderick St', streetNumber:'1615',

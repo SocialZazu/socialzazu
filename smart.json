@@ -1,9 +1,9 @@
 {
   "packages": {
     "iron-router": {},
-    "bootstrap-themes": {},
     "typeahead": {},
-    "bootstrap-3": {},
-    "accounts-ui-bootstrap-3": {}
+    "roles": {},
+    "accounts-entry": {},
+    "bootstrap-themes": {}
   }
 }

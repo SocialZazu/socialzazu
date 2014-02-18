@@ -6,8 +6,8 @@
 //     services:[service_id], lat:String, lng:Number, nameRoute:String, city:String, state:String, zipcode:String, timeCreated:Int, timeUpdated:Int, hours:String}
 Resources = new Meteor.Collection('resources');
 
-// Clients are people who use the social services. Need to implement
-Clients = new Meteor.Collection('clients');
+// Patients are people who use the social services. Need to implement
+Patients = new Meteor.Collection('clients');
 
 // Tokens are from the app //Need to implement
 Tokens = new Meteor.Collection('tokens');
@@ -17,7 +17,7 @@ Tokens = new Meteor.Collection('tokens');
 Caretakers = new Meteor.Collection('caretakers');
 
 // Services are types of resources. Many-to-Many with Resources
-// {name:String, count:Integer, resources:[], nameRoute:String, timeCreated:Int}
+// {name:String, count:Integer, resources:[], nameRoute:String, timeCreated:Int, patient_inputs:{field_name:[type_expected, example]}, resource_inputs:{field_name:type_expected}, children:[], isParent:Boolean}
 Services = new Meteor.Collection('services');
 
 // Flags are alerts that something has been flagged for changing
