@@ -4,12 +4,12 @@ Meteor.startup( function() {
   });
 });
 
-// AccountsEntry.config({
-//     privacyUrl: '/privacy-policy',
-//     termsUrl: '/terms-of-use',
-//     passwordSignupFields: 'USERNAME_AND_EMAIL',
-//     homeRoute: '/',
-//     dashboardRoute: '/',
-//     profileRoute: '/',
-//     showSignupCode: false
-// });
+AccountsEntry.config({
+  privacyUrl: '/privacy-policy',
+  termsUrl: '/terms-of-use',
+  passwordSignupFields: 'EMAIL_ONLY',
+  homeRoute: '/',
+  dashboardRoute: '/',
+  profileRoute: '/',
+  showSignupCode: false
+});
