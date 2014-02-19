@@ -92,7 +92,7 @@ Template.search_map.rendered = function() {
   $('#search_map_field').outerWidth($('#map_canvas').width());
 }
 
-Template.search_resources.rendered = function() {
+Template.home_search_resources.rendered = function() {
   var data = this.data;
   var datums = new Bloodhound({
     datumTokenizer: function(d) { return Bloodhound.tokenizers.whitespace(d.value); },

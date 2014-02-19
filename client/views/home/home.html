@@ -10,7 +10,7 @@
     </div>
     <div class="span4" style="margin-left:20px">
       {{#with resource_datums}}
-      {{> search_resources}}
+      {{> home_search_resources}}
       {{/with}}
     </div>
   </div>
@@ -79,13 +79,8 @@
   </div>
 </template>
 
-<template name="search_resources">
-  <form id="search_resources_form" class="form-search form-horizontal">
-    <div class="input-append">
-      <input id="search_resources_field" type="text" class="search-query" placeholder="Search Resources">
-      <button type="submit" class="btn"><i class="icon-search"></i></button>
-    </div>
-  </form>
+<template name="home_search_resources">
+  {{>search_resources}}
 </template>
 
 <template name="display_home">
