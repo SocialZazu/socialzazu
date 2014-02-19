@@ -1,6 +1,6 @@
 Template.base.helpers({
-  hasEditorPermission: function() {
-    //TODO: check permission level on Meteor.userId()
+  has_editor_permission: function() {
+    return Roles.userIsInRole(Meteor.userId(), ['editor', 'admin']);
   }
 });
 

@@ -12,11 +12,15 @@
         </a>
         <a class="brand" href="{{pathFor 'home'}}">SocialZazu</a>
         <div class="pull-right">
-          <ul id="loginButtons" class="nav">{{loginButtons}}</ul>
+          <ul id="loginButtons" class="nav">{{accountButtons}}</ul>
         </div>
-        {{#if hasEditorPermission}}
+        {{#if has_editor_permission}}
         <div class="pull-right">
-          <ul id="editorLink" class="nav"><a href="{{urlFor 'editor'}}">Editor</a></ul>
+          <ul class="nav">
+            <li>
+              <a class="profileLink" href="{{pathFor 'editor'}}">Editor</a>
+            </li>
+          </ul>
         </div>
         {{/if}}
       </div>
