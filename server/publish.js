@@ -12,7 +12,7 @@ Meteor.publish('resources_from_top_services', function() {
 });
 
 Meteor.publish('resources', function() {
-    return Resources.find({}, {fields: {contactPerson:false}});
+    return Resources.find({})
 });
 
 Meteor.publish('resources_from_ids', function(ids) {
@@ -25,17 +25,24 @@ Meteor.publish('resources_in_zipcode', function() {
 });
 
 Meteor.publish('resources_from_services', function(services) {
-    service_ids = [];
-    _.each(services, function(service) {
-        service_ids.push(service._id);
+    service_ids = services.map(function(service) {
+      return service._id
     });
     return Resources.find({services:{$in:service_ids}}, {fields: {contactPerson:false}});
 });
 
+Meteor.publish('inputs', function() {
+  return Inputs.find();
+});
+
 Meteor.publish('flags_from_user', function(user_id) {
-    if (!user_id) {
-        return null;
-    } else {
-        return Flags.find({open:true, user_id:user_id});
-    }
+  if (!user_id) {
+    return null;
+  } else {
+    return Flags.find({open:true, user_id:user_id});
+  }
+});
+
+Meteor.publish('open_flags', function() {
+  return Flags.find({open:true})
 });
