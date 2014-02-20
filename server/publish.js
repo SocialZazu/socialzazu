@@ -25,10 +25,13 @@ Meteor.publish('resources_in_zipcode', function() {
 });
 
 Meteor.publish('resources_from_services', function(services) {
-    service_ids = services.map(function(service) {
-      return service._id
-    });
-    return Resources.find({services:{$in:service_ids}}, {fields: {contactPerson:false}});
+  if (!services) {
+    return [];
+  }
+  service_ids = services.map(function(service) {
+    return service._id;
+  });
+  return Resources.find({services:{$in:service_ids}}, {fields: {contactPerson:false}});
 });
 
 Meteor.publish('inputs', function() {

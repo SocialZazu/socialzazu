@@ -95,6 +95,5 @@ Meteor.startup(function() {
     Services.update({_id:service_drug_id}, {$set:{count:2}});
     Services.update({_id:service_food_id}, {$set:{count:1}});
     Services.update({_id:service_housing_id}, {$set:{count:1}});
-
   }
 });
