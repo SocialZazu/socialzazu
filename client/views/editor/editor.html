@@ -20,31 +20,30 @@
     </div>
   </div>
   <div class="row-fluid">
-    {{#if show_new_resource}}
-    {{> new_resource}}
-    {{/if}}
+    <div style="margin:20px">
+      {{#if show_new_resource}}
+      {{> new_resource}}
+      {{/if}}
 
-    {{#if show_edit_resource}}
-    {{> edit_resource}}
-    {{/if}}
+      {{#if show_edit_resource}}
+      {{> edit_resource}}
+      {{/if}}
 
-    {{#if show_flags}}
-    {{> display_flags}}
-    {{/if}}
+      {{#if show_flags}}
+      {{> display_flags}}
+      {{/if}}
+    </div>
   </div>
 </template>
 
 <template name="choose_category">
-  <div class="control-group">
-    <label class="control-label">{{service_category_name}}</label>
-    <div class="controls">
-      <select id="service" name="service" class="input-xlarge">
-        <option value="" selected="selected">Please Select a Category</option>
-        {{#each categories}}
-        <option value="{{_id}}">{{name}}</option>
-        {{/each}}
-      </select>
-    </div>
+  <div class="controls" style="margin-left:20px">
+    <select id="service" name="service" class="input-xlarge">
+      <option value="" selected="selected">Please Select a Category</option>
+      {{#each categories}}
+      <option value="{{_id}}">{{name}}</option>
+      {{/each}}
+    </select>
   </div>
 </template>
 
@@ -85,6 +84,11 @@
 
 <template name="edit_search_resources">
   {{> search_resources}}
+</template>
+
+<template name="edit_resource">
+  <p>Hi</p>
+
 </template>
 
 <template name="category_field_input">
@@ -130,7 +134,7 @@
 </template>
 
 <template name="display_flags">
-  <div class="row-fluid" style="margin-top:25px">
+  <div class="row-fluid" style="margin-top:35px;">
     <h4>{{num_flags}} Open Flags</h4>
   </div>
   {{#each flags}}

@@ -5,6 +5,18 @@ Template.category_field_hours.helpers({
   }
 });
 
+Template.choose_category.events({
+  'change #service': function(e, tmpl) {
+    var category_id = $(e.target).find(":selected").val();
+    if (category_id == '') {
+      Session.set('category_id', null);
+    } else {
+      Session.set('category_id', category_id);
+      Session.set('resource_id', null);
+    }
+  }
+});
+
 Template.choose_category.helpers({
   service_category_name: function() {
     if (Session.get('category_id')) {
@@ -74,21 +86,12 @@ Template.edit_search_resources.rendered = function() {
   $('#search_resources_field').typeahead(null, {
     displayKey: 'value',
     source: datums.ttAdapter()
-  }).on('typeahead:autocompleted', function(event, datum) {
-    Session.set('edit_resource', datum.name_route);
+  }).on('typeahead:selected', function(event, datum) {
+    console.log(datum);
+    console.log('seelcted');
+    Session.set('resource_id', datum.name_route);
   });
 }
-
-Template.new_resource.events({
-  'change #service': function(e, tmpl) {
-    var category_id = $(e.target).find(":selected").val();
-    if (category_id == '') {
-      Session.set('category_id', null);
-    } else {
-      Session.set('category_id', category_id);
-    }
-  }
-});
 
 Template.new_resource.helpers({
   resource_fields: function(type) {
