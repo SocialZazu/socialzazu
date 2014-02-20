@@ -31,9 +31,9 @@ map = {
       this.markers[i].setMap(this.gmap);
       var bounds = this.gmap.getBounds();
       if (bounds && bounds.contains(this.markers[i].position)) {
-        var map_resources = Session.get('map_resources');
-        map_resources.push(this.markers[i].id);
-        Session.set('map_resources', map_resources);
+        var map_markers_in_view = Session.get('map_markers_in_view');
+        map_markers_in_view.push(this.markers[i].id);
+        Session.set('map_markers_in_view', map_markers_in_view);
       }
     }
   },
@@ -118,4 +118,10 @@ map = {
     }
     return markerIDs;
   },
+}
+
+geocode_check = function(resource) {
+  if (!resource.lat) {
+    map.assign_geocode(resource);
+  }
 }

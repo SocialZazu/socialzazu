@@ -21,9 +21,7 @@
       {{/with}}
     </div>
     <div class="span5" style="height:100%; margin-left:20px">
-      {{#constant}}
       {{> map_home}}
-      {{/constant}}
     </div>
     <div class="span4" style="margin-left:20px" id="display_home">
       {{> display_home}}
@@ -68,19 +66,21 @@
 <template name="search_map">
   <form class="form-search form-horizontal">
     <div class="input-append">
-      <input id="search_map_field" type="text" size="200" placeholder="Change Location">
+      <input id="search_map_field" type="text" size="200" placeholder="Change Location" style="-webkit-border-radius:14px; -moz-border-raidus:14px">
     </div>
   </form>
 </template>
 
 <template name="map_home">
   <div id="map" style="height:100%">
+    {{#constant}}
     <div id="map_canvas"></div>
+    {{/constant}}
   </div>
 </template>
 
 <template name="home_search_resources">
-  {{>search_resources}}
+  {{> search_resources}}
 </template>
 
 <template name="display_home">
@@ -91,7 +91,7 @@
         <a href="{{urlFor 'resource'}}"><h4>{{name}}</h4></a>
       </div>
       <div class="span1">
-        <a class="flag" id="{{_id}}"><span class="glyphicon glyphicon-flag {{flag_on}}"></span></a>
+        <a class="flag" id="{{_id}}"><span class="icon-flag {{flag_on}}"></span></a>
       </div>
     </div>
     <div class="row-fluid">

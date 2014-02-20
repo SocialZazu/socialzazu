@@ -1,15 +1,22 @@
-Session.set('map_resources', []);
-Session.set('display_resource', null);
-Session.set('display_services', []);
-Session.set('bounded', false);
+// geocode_check(Session.get('resources'));
 
 Deps.autorun(function() {
-  Meteor.subscribe('resources_from_ids', Session.get('map_resources'));
+  Meteor.subscribe(
+    'resources_from_services',
+    Session.get('display_services'),
+    function() {
+      Session.set(
+        'resources_from_services',
+        Resources.find({}).fetch()
+      );
+      //TODO: make this update the resources available on map
+    }
+  );
 });
 
 Template.display_home.events({
   'click .flag': function(e, tmpl) {
-    flag = $(tmpl.find('.glyphicon-flag'));
+    flag = $(tmpl.find('.icon-flag'));
     if (!flag.hasClass('red')) {
       Meteor.call("flagResource", $('.flag')[0].id, Meteor.userId());
       if (!Meteor.userId()) { //should auto add if there is a userId
@@ -35,6 +42,18 @@ Template.display_home.helpers({
   },
 });
 
+Template.home.created = function() {
+  Session.set('map_markers_in_view', []);
+  Session.set('resources_from_services', []);
+  Session.set('display_resource', null);
+  Session.set('display_services', []);
+  Session.set('bounded', false);
+}
+
+Template.home.rendered = function() {
+  Session.set('display_services', this.data.services);
+}
+
 Template.home.helpers({
   service_datums: function() {
     return Services.find().map(function(service) {
@@ -51,9 +70,6 @@ Template.home.helpers({
   },
 });
 
-Template.home.rendered = function() {
-}
-
 Template.map_home.rendered = function() {
   if (!Session.get('map')) {
     map.initialize_map();
@@ -67,12 +83,13 @@ Template.map_home.rendered = function() {
       });
     }
     google.maps.event.addListener(map.gmap, 'bounds_changed', function() {
-      Session.set('map_resources', map.markers_in_bounds());
+      Session.set('map_markers_in_view', map.markers_in_bounds());
     });
   }
 
   Deps.autorun(function() {
-    _.each(Resources.find().fetch(), function(resource) {
+    _.each(Session.get('resources_from_services'), function(resource) {
+      geocode_check(resource);
       add_marker(resource);
     });
     if (!Session.get('bounded')) {
@@ -157,29 +174,26 @@ Template.services.events({
 
 Template.services.helpers({
   services: function() {
-    var services = this;
     var i = -1;
-    ret = services.map(function(service) {
+    var services = this.map(function(service) {
       i += 1;
-      return {color:colors[i], name:service.name, count:service.count, id:service._id}
+      return {color:colors[i], name:service.name, count:service.count, _id:service._id};
     });
-    Session.set('display_services', ret);
-    return ret;
+    return services;
   }
 });
 
 Template.services.rendered = function() {
   add_all_selected();
-  geocode_check(Session.get('resources'));
   $('#map_canvas').css("height", $('#services_home').height());
 }
 
 Template.show_map_resources.helpers({
   has_map_resources: function() {
-    return Session.get('map_resources').length > 0;
+    return Session.get('map_markers_in_view').length > 0;
   },
   map_resources: function() {
-    return Resources.find({_id:{$in:Session.get('map_resources')}});
+    return Resources.find({_id:{$in:Session.get('map_markers_in_view')}});
   }
 });
 
@@ -213,33 +227,25 @@ var add_marker = function(resource) {
 var colors = ["#74F0F2", "#B3F2C2", "#DCFA9B", "#FABDFC", "#F5A2AD",
               "#BDC9FC", "#A2B2F5", "#F5E1A2", "#AEF5A2", "#42F55D"];
 
-var geocode_check = function(resources) {
-  _.each(resources, function(resource) {
-    if (!resource.lat) {
-      map.assign_geocode(resource);
-    }
-  });
-}
-
 var remove_all_selected = function() {
     $('.selected').not('.titleBox').css('background-color', "#fff");
     $('.selected').removeClass('selected');
 }
 
 var add_all_selected = function() {
-    $('.serviceBox').addClass('selected');
-    _.each($('.serviceBox').not('.titleBox'), function(box) {
-        box.style.backgroundColor = box.getAttribute('color');
-    });
+  $('.serviceBox').addClass('selected');
+  _.each($('.serviceBox').not('.titleBox'), function(box) {
+    box.style.backgroundColor = box.getAttribute('color');
+  });
 }
 
 var remove_marker = function(resource) {
     map.remove_marker(resource);
-    var map_resources = Session.get('map_resources');
-    var index = map_resources.indexOf(resource._id);
+    var map_markers_in_view = Session.get('map_markers_in_view');
+    var index = map_markers_in_view.indexOf(resource._id);
     if (index > -1) {
-        map_resources.splice(index, 1);
-        Session.set('map_resources', map_resources);
+        map_markers_in_view.splice(index, 1);
+        Session.set('map_markers_in_view', map_markers_in_view);
     }
 };
 
@@ -254,7 +260,7 @@ var adjust_map_display = function(box, f) {
   var services = Session.get('display_services');
   if (color_index != -1 && color_index < services.length && services) {
     var service = services[color_index];
-    Resources.find({services:service.id}).forEach(function(resource) {
+    Resources.find({services:service._id}).forEach(function(resource) {
       f(resource)
     });
   }
