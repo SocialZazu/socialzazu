@@ -54,7 +54,8 @@ Meteor.startup(function() {
                                          shortDescription:'Elizabeth House is a transitional program for women with children who have experienced homelessness, violence addiction, or poverty.',
                                          city:"Oakland", state:"CA", zipcode:"94618", creation_time:timestamp, updated_time:timestamp, services:[service_housing_id],
                                          patient_inputs:[age_id, gender_id, family_size_id, disability_id, home_id],
-                                         resource_inputs:[cost_id, zipcode_id, misc_id]});
+                                         resource_inputs:[cost_id, zipcode_id, misc_id],
+                                         lat:37.85142099999999, lng:-122.25718});
 
     var service_mental_health_id = Services.insert({name:'Mental Health', count:0, resources:[], nameRoute:'Mental-Health', creation_time:timestamp, updated_time:timestamp});
     var service_food_id = Services.insert({name:'Food', count:0, resources:[], nameRoute:'Food', creation_time:timestamp, updated_time:timestamp});
@@ -70,7 +71,7 @@ Meteor.startup(function() {
        longDescription:"Epiphany House is a treatment center in San Francisco, California that focuses on substance abuse services by providing substance abuse treatment services. The programs offered are designed for residential beds for clients' children. .. ..",
        shortDescription:"Treatment Center in San Francisco",
        services:[service_drug_id], creation_time:timestamp, updated_time:timestamp,
-       city:"San Francisco", state:"CA", zipcode:"94115"});
+       city:"San Francisco", state:"CA", zipcode:"94115", lat:37.78551, lng:-122.441978});
 
     var hpp_id = Resources.insert(
       {name:'Homeless Prenatal', street:'18th St', streetNumber:'2500',
@@ -79,7 +80,7 @@ Meteor.startup(function() {
        longDescription:"Epiphany House is a treatment center in San Francisco, California that focuses on substance abuse services by providing substance abuse treatment services. The programs offered are designed for residential beds for clients' children. .. ..",
        shortDescription:"Treatment Center in San Francisco",
        services:[service_drug_id], creation_time:timestamp, updated_time:timestamp,
-       city:"San Francisco", state:"CA", zipcode:"94110"});
+       city:"San Francisco", state:"CA", zipcode:"94110", lat:37.762197, lng:-122.40756199999998});
 
     var sffb_id = Resources.insert(
       {name:'San Francisco Food Bank', street:'Pennsylvania Ave', streetNumber:'900',
@@ -87,7 +88,7 @@ Meteor.startup(function() {
        shortDescription:'Food Bank in San Francisco and Marin',
        longDescription:"Our mission is to end hunger in San Francisco and Marin. It's a huge job that's only gotten harder as our community struggles with a prolonged period of economic distress and record numbers of people are pushed to the point of hunger.",
        services:[service_food_id], state:"CA", zipcode:"94107", creation_time:timestamp,
-       updated_time:timestamp, city:"San Francisco"});
+       updated_time:timestamp, city:"San Francisco", lat:37.7544611, lng:-122.39367900000002});
 
     Services.update({_id:service_drug_id}, {$push:{resources:{$each: [hpp_id, epiphany_id]}}});
     Services.update({_id:service_food_id}, {$push:{resources:sffb_id}});
