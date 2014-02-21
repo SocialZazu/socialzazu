@@ -97,6 +97,7 @@ Template.map_home.rendered = function() {
 
   Deps.autorun(function() {
     _.each(Session.get('resources_from_services'), function(resource) {
+      //TODO: make this a diff change, not an all change.
       geocode_check(resource);
       add_marker(resource);
     });
@@ -160,6 +161,7 @@ Template.search_services.rendered = function() {
     }
     if (!has_service) {
       var element = display_services.pop();
+      map.remove_service(element._id);
       var color = element.color;
       Services.find({nameRoute:name_route}).forEach(function(service) {
         display_services.unshift(
@@ -233,13 +235,18 @@ var initialize_map_search = function() {
   });
 };
 
+var remove_all_markers = function() {
+  map.remove_all_markers();
+}
 
 var add_marker = function(resource) {
   if (typeof resource.lat !== 'undefined' &&
       typeof resource.lng !== 'undefined') {
     if (!map.marker_exists(resource._id)) {
       map.add_new_marker({id:resource._id, title:resource.name,
-                          lat:resource.lat, lng:resource.lng});
+                          lat:resource.lat, lng:resource.lng,
+                          services:resource.services,
+                          icon:get_icon_for_resource(resource)});
 //     } else {
 //       map.add_existing_marker(resource);
     }
@@ -248,10 +255,26 @@ var add_marker = function(resource) {
 
 var colors = ["#74F0F2", "#B3F2C2", "#DCFA9B", "#FABDFC", "#F5A2AD",
               "#BDC9FC", "#A2B2F5", "#F5E1A2", "#AEF5A2", "#42F55D"];
+var icons  = ["paleblue_MarkerA.png", "green_MarkerA.png", "yellow_MarkerA.png",
+              "pink_MarkerA.png", "red_MarkerA.png"]
+var icon_from_color = function(color) {
+  return icons[colors.indexOf(color)];
+}
+
+var get_icon_for_resource = function(resource) {
+  var display_services = Session.get('display_services');
+  resource.services.forEach(function(service_id) {
+    display_services.forEach(function(service) {
+      if (service._id == service_id) {
+        return icon_from_color(service.color);
+      }
+    });
+  });
+}
 
 var remove_all_selected = function() {
-    $('.selected').not('.titleBox').css('background-color', "#fff");
-    $('.selected').removeClass('selected');
+  $('.selected').not('.titleBox').css('background-color', "#fff");
+  $('.selected').removeClass('selected');
 }
 
 var add_all_selected = function() {
