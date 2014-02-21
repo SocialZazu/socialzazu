@@ -4,6 +4,7 @@
     "typeahead": {},
     "roles": {},
     "accounts-entry": {},
-    "bootstrap-themes": {}
+    "bootstrap-themes": {},
+    "font-awesome": {}
   }
 }
