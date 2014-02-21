@@ -4,6 +4,7 @@ map = {
   markers: [],
   latLngs: [],
   markerIDs: [],
+  marker_services: [],
 
   add_new_marker: function(marker) {
     var gLatLng = new google.maps.LatLng(marker.lat, marker.lng);
@@ -12,12 +13,13 @@ map = {
       map: this.gmap,
       title: marker.title,
       id: marker.id,
-      icon:'http://maps.google.com/mapfiles/ms/icons/blue-dot.png'
+      icon: marker.icon
     });
 
     this.latLngs.push(gLatLng);
     this.markers.push(gMarker);
     this.markerIDs.push(marker.id);
+    this.marker_services.push(marker.services);
     google.maps.event.addListener(gMarker, 'click', function() {
       resource = Resources.findOne({_id:gMarker.id});
       Session.set('display_resource', resource);
@@ -39,13 +41,25 @@ map = {
   },
 
   remove_marker: function(resource) {
-    console.log(resource);
     var i = this.markerIDs.indexOf(resource._id);
-    console.log(i);
-    console.log(this.markerIDs);
     if (i != -1) {
       this.markers[i].setMap(null);
     }
+  },
+
+  remove_service: function(service_id) { //TODO: make this remove the set of markers as well
+    for (var i = 0; i < this.marker_services.length; i++) {
+      services = this.marker_services[i];
+      if (services.indexOf(service_id) > -1) {
+        this.markers[i].setMap(null);
+      }
+    }
+  },
+
+  remove_all_markers: function() {
+    this.markers.forEach(function(marker) {
+      marker.setMap(null);
+    });
   },
 
   calc_bounds: function() {
@@ -80,6 +94,8 @@ map = {
   },
 
   assign_geocode: function(resource) {
+    console.log('assignging geocode for resource');
+    console.log(resource);
     if (!this.geocoder) {
       this.geocoder = new google.maps.Geocoder();
     }
