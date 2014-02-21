@@ -1,10 +1,17 @@
-Meteor.publish('services', function() {
-    return Services.find({});
+Meteor.publish('flags_from_user', function(user_id) {
+  if (!user_id) {
+    return null;
+  } else {
+    return Flags.find({open:true, user_id:user_id});
+  }
 });
 
-//change to incorporate some metric
-Meteor.publish('top_services', function() {
-  return Services.find({});
+Meteor.publish('inputs', function() {
+  return Inputs.find();
+});
+
+Meteor.publish('open_flags', function() {
+  return Flags.find({open:true})
 });
 
 Meteor.publish('resources_from_top_services', function() {
@@ -34,18 +41,16 @@ Meteor.publish('resources_from_services', function(services) {
   return Resources.find({services:{$in:service_ids}}, {fields: {contactPerson:false}});
 });
 
-Meteor.publish('inputs', function() {
-  return Inputs.find();
+Meteor.publish('service_name_route', function(name_route) {
+  return Services.find({nameRoute:name_route});
 });
 
-Meteor.publish('flags_from_user', function(user_id) {
-  if (!user_id) {
-    return null;
-  } else {
-    return Flags.find({open:true, user_id:user_id});
-  }
+Meteor.publish('services', function() {
+    return Services.find({});
 });
 
-Meteor.publish('open_flags', function() {
-  return Flags.find({open:true})
+//change to incorporate some metric
+Meteor.publish('top_services', function() {
+  return Services.find({});
 });
+

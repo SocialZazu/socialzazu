@@ -51,7 +51,18 @@ Template.home.created = function() {
 }
 
 Template.home.rendered = function() {
-  Session.set('display_services', this.data.services);
+  var i = -1;
+  if (Session.get('display_services').length == 0) {
+    Session.set('display_services',
+                this.data.services.map(
+                  function(service) {
+                    i += 1;
+                    return {color:colors[i], name:service.name, name_route:service.name_route,
+                            count:service.count, _id:service._id};
+                  }
+                )
+               );
+  }
 }
 
 Template.home.helpers({
@@ -64,9 +75,6 @@ Template.home.helpers({
     return Resources.find().map(function(resource) {
       return {value:resource.name, name_route:resource._id}
     });
-  },
-  services: function() {
-    return this.services;
   },
 });
 
@@ -141,7 +149,26 @@ Template.search_services.rendered = function() {
     displayKey: 'value',
     source: services_datums.ttAdapter()
   }).on('typeahead:selected', function(event, datum) {
-    Router.go('/service/' + datum.name_route);
+    var display_services = Session.get('display_services');
+    var name_route = datum.name_route;
+    var has_service = false;
+    for (var i = 0; i < display_services.length; i++) {
+      if (display_services[i].name_route == name_route) {
+        has_service = true;
+        break;
+      }
+    }
+    if (!has_service) {
+      var element = display_services.pop();
+      var color = element.color;
+      Services.find({nameRoute:name_route}).forEach(function(service) {
+        display_services.unshift(
+          {name:service.name, name_route:service.nameRoute,
+           count:service.count, _id:service._id, color:color}
+        );
+        Session.set('display_services', display_services);
+      });
+    }
   });
 }
 
@@ -174,12 +201,7 @@ Template.services.events({
 
 Template.services.helpers({
   services: function() {
-    var i = -1;
-    var services = this.map(function(service) {
-      i += 1;
-      return {color:colors[i], name:service.name, count:service.count, _id:service._id};
-    });
-    return services;
+    return Session.get('display_services');
   }
 });
 
