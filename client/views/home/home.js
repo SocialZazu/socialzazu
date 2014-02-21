@@ -16,7 +16,7 @@ Deps.autorun(function() {
 
 Template.display_home.events({
   'click .flag': function(e, tmpl) {
-    flag = $(tmpl.find('.icon-flag'));
+    flag = $(tmpl.find('.fa-flag'));
     if (!flag.hasClass('red')) {
       Meteor.call("flagResource", $('.flag')[0].id, Meteor.userId());
       if (!Meteor.userId()) { //should auto add if there is a userId
@@ -210,6 +210,7 @@ Template.services.helpers({
 Template.services.rendered = function() {
   add_all_selected();
   $('#map_canvas').css("height", $('#services_home').height());
+  $('#display_home').css("height", $('#services_home').height());
 }
 
 Template.show_map_resources.helpers({
