@@ -211,6 +211,7 @@ Template.services.rendered = function() {
   add_all_selected();
   $('#map_canvas').css("height", $('#services_home').height());
   $('#display_home').css("height", $('#services_home').height());
+  $('.search-query.tt-hint').width('inherit');
 }
 
 Template.show_map_resources.helpers({
