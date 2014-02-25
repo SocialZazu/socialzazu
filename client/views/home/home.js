@@ -14,18 +14,6 @@ Deps.autorun(function() {
   );
 });
 
-Template.display_home.events({
-  'click .flag': function(e, tmpl) {
-    flag = $(tmpl.find('.fa-flag'));
-    if (!flag.hasClass('red')) {
-      Meteor.call("flagResource", $('.flag')[0].id, Meteor.userId());
-      if (!Meteor.userId()) { //should auto add if there is a userId
-        flag.addClass('red');
-      }
-    }
-  }
-});
-
 Template.display_home.helpers({
   resource: function() {
     return !(Session.get('display_resource') == null);
@@ -42,12 +30,23 @@ Template.display_home.helpers({
   },
 });
 
+Template.flag_control.events({
+  'click .flag': function(e, tmpl) {
+    flag = $(tmpl.find('.fa-flag'));
+    if (!flag.hasClass('red')) {
+      Meteor.call("flag_resource", flag.parent().attr('id'), Meteor.userId());
+      if (!Meteor.userId()) { //should auto add if there is a userId
+        flag.addClass('red');
+      }
+    }
+  }
+});
+
 Template.home.created = function() {
   Session.set('map_markers_in_view', []);
   Session.set('resources_from_services', []);
   Session.set('display_resource', null);
   Session.set('display_services', []);
-  Session.set('bounded', false);
 }
 
 Template.home.rendered = function() {
@@ -101,11 +100,6 @@ Template.map_home.rendered = function() {
       geocode_check(resource);
       add_marker(resource);
     });
-    if (!Session.get('bounded')) {
-      var bounds = map.calc_bounds();
-      map.gmap.fitBounds(bounds);
-      Session.set('bounded', true);
-    }
   });
 }
 
@@ -230,7 +224,6 @@ var initialize_map_search = function() {
     var place = autocomplete.getPlace();
     if (place.geometry) {
       map.panTo(place.geometry.location);
-      map.setZoom(14);
     } else {
       input.placeholder = 'Change Location';
     }

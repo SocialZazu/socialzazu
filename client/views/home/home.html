@@ -37,16 +37,6 @@
 </template>
 
 <template name="services">
-  <div class="serviceBox titleBox selected" id="titleBox">
-    <div class="row-fluid">
-      <div class="span10">
-        Services
-      </div>
-      <div class="pull-right">
-        1000
-      </div>
-    </div>
-  </div>
   {{#each services}}
   <div class="serviceBox selected" color={{color}}>
     <div class="row-fluid">
@@ -124,7 +114,7 @@
 
 <template name="flag_control">
   <div class="pull-right" >
-    <a class="flag" id="{{_id}}"><i class="fa fa-flag {{flag_on}}"></i></a>
+    <a class="flag" id="{{_id}}"><i class="fa fa-flag fa-2x {{flag_on}}"></i></a>
   </div>
 </template>
 

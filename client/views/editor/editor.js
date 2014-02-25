@@ -41,10 +41,12 @@ Template.display_flags.events({
 Template.display_flags.helpers({
   num_flags: function() {
     var count = Flags.find({open:true}).count();
-    if (count > 0) {
-      return count;
+    if (count == 1) {
+      return count + " Open Flag";
+    } else if (count > 1) {
+      return count + " Open Flags";
     } else {
-      return "No"
+      return "No Open Flags";
     }
   },
   resource_name: function() {
