@@ -90,18 +90,16 @@ make_internet = function(url, email) {
   return {url:url, email:email}
 }
 
-make_services = function(audience, eligibility, fees, how_to_apply,
-                         service_areas, sub_service_ids) {
+make_services = function(audience, eligibility, fees, how_to_apply) {
   return {audience:audience, eligibility:eligibility, fees:fees,
-          how_to_apply:how_to_apply, service_areas:service_areas,
-          sub_service_ids:sub_service_ids};
+          how_to_apply:how_to_apply};
 }
 
-make_location = function(name, timestamp, contacts, description, short_desc,
+make_location = function(timestamp, contacts, description, short_desc,
                          addresses, service_poc, hours,
                          transportation, accessibility, languages,
                          phones, internet_resource, services) {
-  return {name:name, name_route:make_name_route(name), created_time:timestamp,
+  return {created_time:timestamp,
           contacts:contacts, description:description,
           short_desc:short_desc, address:addresses, service_poc:[service_poc],
           hours:hours, transportation:transportation, languages:languages,
@@ -110,19 +108,17 @@ make_location = function(name, timestamp, contacts, description, short_desc,
          }
 }
 
-make_resource = function(name, timestamp, location) {
+make_resource = function(name, timestamp, location, service_areas, sub_services) {
   var resource = Resources.findOne({name:name});
   if (resource) {
-    Resources.update({name:name}, {$push:{locations:location},
-                                   $set:{updated_time:timestamp}});
     return resource._id;
   } else {
     var resource_id = Resources.insert(
-      {name:name, created_time:timestamp, name_route:make_name_route(name),
-       locations:[
-         location
-       ]
+      {
+        name:name, created_time:timestamp, name_route:make_name_route(name),
+        locations:location, service_areas:service_areas, sub_services:sub_services
       }
     );
+    return resource_id;
   }
 }
