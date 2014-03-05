@@ -1,4 +1,4 @@
-// geocode_check(Session.get('resources'));
+PAN_TO_ME = false;
 
 Deps.autorun(function() {
   Meteor.subscribe(
@@ -32,10 +32,11 @@ Template.display_home.helpers({
 
 Template.flag_control.events({
   'click .flag': function(e, tmpl) {
-    flag = $(tmpl.find('.fa-flag'));
+    flag = $(tmpl.find('.icon-flag'));
     if (!flag.hasClass('red')) {
       Meteor.call("flag_resource", flag.parent().attr('id'), Meteor.userId());
-      if (!Meteor.userId()) { //should auto add if there is a userId
+      if (!Meteor.userId()) {
+        //TODO: doesn't do red if using icon-flag
         flag.addClass('red');
       }
     }
@@ -46,28 +47,14 @@ Template.home.created = function() {
   Session.set('map_markers_in_view', []);
   Session.set('resources_from_services', []);
   Session.set('display_resource', null);
-  Session.set('display_services', []);
-}
-
-Template.home.rendered = function() {
-  var i = -1;
-  if (Session.get('display_services').length == 0) {
-    Session.set('display_services',
-                this.data.services.map(
-                  function(service) {
-                    i += 1;
-                    return {color:colors[i], name:service.name, name_route:service.name_route,
-                            count:service.count, _id:service._id};
-                  }
-                )
-               );
-  }
+  Session.set('display_services', []); //all in sidebar
+  Session.set('visible_services', []); //the ones shown on map
 }
 
 Template.home.helpers({
   service_datums: function() {
     return Services.find().map(function(service) {
-      return {value:service.name, name_route:service.nameRoute, count:service.count}
+      return {value:service.name, name_route:service.name_route}
     });
   },
   resource_datums: function() {
@@ -75,41 +62,37 @@ Template.home.helpers({
       return {value:resource.name, name_route:resource._id}
     });
   },
+  county_datums: function() {
+    return Counties.find().map(function(county) {
+      return {value:county.name, _id:county._id};
+    });
+  },
 });
 
-Template.map_home.rendered = function() {
-  if (!Session.get('map')) {
-    map.initialize_map();
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(function(position) {
-        var center = new google.maps.LatLng(position.coords.latitude,
-                                            position.coords.longitude);
-        if(center) {
-          map.panTo(center);
-        }
-      });
-    }
-    google.maps.event.addListener(map.gmap, 'bounds_changed', function() {
-      Session.set('map_markers_in_view', map.markers_in_bounds());
-    });
-  }
+var colors = ["#74F0F2", "#B3F2C2", "#DCFA9B", "#FABDFC", "#F5A2AD",
+              "#BDC9FC", "#A2B2F5", "#F5E1A2", "#AEF5A2", "#42F55D"];
+Template.home.rendered = function() {
+  var i = -1;
+  Session.set(
+    'display_services',
+    this.data.services.map(
+      function(service) {
+        i += 1;
+        return {color:colors[i], name:service.name, name_route:service.name_route,
+                _id:service._id};
+      }
+    )
+  );
+  Session.set('visible_services',
+              this.data.services.map(
+                function(service) {
+                  return service._id;
+                }
+              )
+             );
 
-  Deps.autorun(function() {
-    _.each(Session.get('resources_from_services'), function(resource) {
-      //TODO: make this a diff change, not an all change.
-      geocode_check(resource);
-      add_marker(resource);
-    });
-  });
-}
-
-Template.map_home.destroyed = function() {
-  Session.set('map', false);
-};
-
-Template.search_map.rendered = function() {
-  initialize_map_search();
-  $('#search_map_field').outerWidth($('#map_canvas').width());
+  $('#search_services_form').outerWidth($('#services_home').width());
+  $('#search_map_field').outerWidth($('#map_canvas').width())
 }
 
 Template.home_search_resources.rendered = function() {
@@ -130,6 +113,77 @@ Template.home_search_resources.rendered = function() {
   });
 };
 
+Template.map_home.rendered = function() {
+  if (!this.rendered) {
+    map.initialize_map();
+    this.rendered = Session.get('map');
+    if (PAN_TO_ME && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(function(position) {
+        var center = new google.maps.LatLng(position.coords.latitude,
+                                            position.coords.longitude);
+        if(center) {
+          map.panTo(center);
+        }
+      });
+    }
+    google.maps.event.addListener(map.gmap, 'bounds_changed', function() {
+      Session.set('map_markers_in_view', map.markers_in_bounds());
+    });
+  }
+
+  Deps.autorun(function() {
+    _.each(Session.get('resources_from_services'), function(resource) {
+      //TODO: make this a diff change, not an all change.
+      add_marker(resource);
+    });
+  });
+}
+
+Template.map_home.destroyed = function() {
+  Session.set('map', false);
+};
+
+Template.resource_well.helpers({
+  sub_services: function() {
+    return Services.find({_id:{$in:this.sub_service_ids}}, {name:true});
+  },
+});
+
+Template.resource_hours.helpers({
+  day_of_week: function() {
+    return [this.m, this.tu, this.w, this.th, this.f, this.sa, this.su];
+  },
+  closed: function() {
+    return this.closed || (!this.open_time && !this.close_time);
+  },
+  open: function() {
+    return military_to_regular(this.open_time);
+  },
+  close: function() {
+    return military_to_regular(this.close_time);
+  }
+});
+
+Template.search_map.rendered = function() {
+//   initialize_map_search();
+}
+
+Template.search_county.rendered = function() {
+  var data = this.data;
+  var counties_datums = new Bloodhound({
+    datumTokenizer: function(d) { return Bloodhound.tokenizers.whitespace(d.value); },
+    queryTokenizer: Bloodhound.tokenizers.whitespace,
+    local: data
+  });
+  counties_datums.initialize();
+  $('#search_counties_field').typeahead(null, {
+    displayKey:'value',
+    source: counties_datums.ttAdapter()
+  }).on('typeahead:selected', function(event, datum) {
+    Session.set('county', datum._id);
+  });
+}
+
 Template.search_services.rendered = function() {
   var data = this.data;
   var services_datums = new Bloodhound({
@@ -139,7 +193,6 @@ Template.search_services.rendered = function() {
   });
   services_datums.initialize();
 
-  $('#search_services_form').outerWidth($('#services_home').width());
   $('#search_services_field').typeahead(null, {
     displayKey: 'value',
     source: services_datums.ttAdapter()
@@ -157,10 +210,10 @@ Template.search_services.rendered = function() {
       var element = display_services.pop();
       map.remove_service(element._id);
       var color = element.color;
-      Services.find({nameRoute:name_route}).forEach(function(service) {
+      Services.find({name_route:name_route}).forEach(function(service) {
         display_services.unshift(
-          {name:service.name, name_route:service.nameRoute,
-           count:service.count, _id:service._id, color:color}
+          {name:service.name, name_route:service.name_route,
+           _id:service._id, color:color}
         );
         Session.set('display_services', display_services);
       });
@@ -168,40 +221,40 @@ Template.search_services.rendered = function() {
   });
 }
 
-Template.services.events({
+Template.service_box.events({
   'click .serviceBox': function(e, tmpl) {
     var box = $(e.target).closest('.serviceBox');
-    if (box.hasClass('titleBox')) {
-      if (box.hasClass('selected')) {
-        remove_all_selected();
-        _.each(Session.get('resources'), function(resource) {
-          remove_marker(resource);
-        });
-      } else {
-        add_all_selected();
-        _.each(Session.get('resources'), function(resource) {
-          add_existing_marker(resource);
-        });
+    var color_index = colors.indexOf(box.attr('color'));
+    var service = Session.get('display_services')[color_index];
+    var visibles = Session.get('visible_services');
+    var index = visibles.indexOf(service._id);
+    if (box.hasClass('selected')) {
+      if (index > -1) {
+        visibles.splice(index, 1);
+        Session.set('visible_services', visibles);
       }
-    } else if (box.hasClass('selected')) {
+      adjust_map_display(service, remove_marker);
       box.removeClass('selected');
-      adjust_map_display(box, remove_marker);
       box.css('background-color', '#fff');
     } else {
+      if (index == -1) {
+        visibles.push(service);
+        Session.set('visible_services', visibles);
+      }
+      adjust_map_display(service, add_existing_marker);
       box.addClass('selected');
-      adjust_map_display(box, add_existing_marker);
       box.css('background-color', box.attr('color'));
     }
   }
 });
 
-Template.services.helpers({
+Template.services_sidebar.helpers({
   services: function() {
     return Session.get('display_services');
   }
 });
 
-Template.services.rendered = function() {
+Template.services_sidebar.rendered = function() {
   add_all_selected();
   $('#map_canvas').css("height", $('#services_home').height());
   $('#display_home').css("height", $('#services_home').height());
@@ -213,7 +266,16 @@ Template.show_map_resources.helpers({
     return Session.get('map_markers_in_view').length > 0;
   },
   map_resources: function() {
-    return Resources.find({_id:{$in:Session.get('map_markers_in_view')}});
+    return Resources.find({_id:{$in:Session.get('map_markers_in_view')}}).map(function(resource) {
+      var services = resource.sub_service_ids;
+      var display = Session.get('display_services');
+      for (var i = 0; i < display.length; i++) {
+        if (Session.get('visible_services').indexOf(display[i]._id) > -1 && resource.sub_service_ids.indexOf(display[i]._id) > -1) {
+          return resource;
+          break;
+        }
+      }
+    });
   }
 });
 
@@ -235,42 +297,24 @@ var remove_all_markers = function() {
 }
 
 var add_marker = function(resource) {
-  if (typeof resource.lat !== 'undefined' &&
-      typeof resource.lng !== 'undefined') {
-    if (!map.marker_exists(resource._id)) {
-      map.add_new_marker({id:resource._id, title:resource.name,
-                          lat:resource.lat, lng:resource.lng,
-                          services:resource.services,
-                          icon:get_icon_for_resource(resource)});
-//     } else {
-//       map.add_existing_marker(resource);
+  var addresses = resource.locations.address;
+  for (var i = 0; i < addresses.length; i++) {
+    var adrs = addresses[i];
+    if (typeof adrs.spatial_location.lat !== 'undefined' &&
+        typeof adrs.spatial_location.lng !== 'undefined') {
+      var exists = map.marker_exists(resource._id, i);
+      if (!exists[0]) {
+        var icon = get_icon_for_resource(resource);
+        map.add_new_marker({
+          id:resource._id, position:i, title:resource.name,
+          lat:adrs.spatial_location.lat,
+          lng:adrs.spatial_location.lng,
+          services:resource.sub_service_ids,
+          icon:icon});
+      }
     }
   }
 };
-
-var colors = ["#74F0F2", "#B3F2C2", "#DCFA9B", "#FABDFC", "#F5A2AD",
-              "#BDC9FC", "#A2B2F5", "#F5E1A2", "#AEF5A2", "#42F55D"];
-var icons  = ["paleblue_MarkerA.png", "green_MarkerA.png", "yellow_MarkerA.png",
-              "pink_MarkerA.png", "red_MarkerA.png"]
-var icon_from_color = function(color) {
-  return icons[colors.indexOf(color)];
-}
-
-var get_icon_for_resource = function(resource) {
-  var display_services = Session.get('display_services');
-  resource.services.forEach(function(service_id) {
-    display_services.forEach(function(service) {
-      if (service._id == service_id) {
-        return icon_from_color(service.color);
-      }
-    });
-  });
-}
-
-var remove_all_selected = function() {
-  $('.selected').not('.titleBox').css('background-color', "#fff");
-  $('.selected').removeClass('selected');
-}
 
 var add_all_selected = function() {
   $('.serviceBox').addClass('selected');
@@ -279,29 +323,63 @@ var add_all_selected = function() {
   });
 }
 
-var remove_marker = function(resource) {
-    map.remove_marker(resource);
-    var map_markers_in_view = Session.get('map_markers_in_view');
-    var index = map_markers_in_view.indexOf(resource._id);
-    if (index > -1) {
-        map_markers_in_view.splice(index, 1);
-        Session.set('map_markers_in_view', map_markers_in_view);
-    }
-};
-
 var add_existing_marker = function(resource) {
-    map.add_existing_marker(resource);
+  map.add_existing_marker(resource);
 };
 
-var adjust_map_display = function(box, f) {
-  //TODO: fix this. It's very hacky.
-  var color = box.attr('color');
-  var color_index = colors.indexOf(color);
-  var services = Session.get('display_services');
-  if (color_index != -1 && color_index < services.length && services) {
-    var service = services[color_index];
-    Resources.find({services:service._id}).forEach(function(resource) {
-      f(resource)
-    });
-  }
+var adjust_map_display = function(service, f) {
+  Resources.find({sub_service_ids:service._id}).forEach(function(resource) {
+    f(resource);
+  });
 };
+
+var get_icon_for_resource = function(resource) {
+  var display_services = Session.get('display_services');
+  var icon = false;
+  resource.sub_service_ids.forEach(function(service_id) {
+    display_services.forEach(function(service) {
+      if (service._id == service_id) {
+        icon = '/gflags/' + icon_from_color(service.color);
+      }
+    });
+  });
+  return icon;
+}
+
+var icons = ["paleblue_MarkerA.png", "green_MarkerA.png", "yellow_MarkerA.png",
+              "pink_MarkerA.png", "red_MarkerA.png", "blue_MarkerA.png"]
+var icon_from_color = function(color) {
+  return icons[colors.indexOf(color)];
+}
+
+var military_to_regular = function(time) {
+  //convert military, e.g. 1700 --> 5pm
+  if (time == null || time < 0 || time > 2400) {
+    return null;
+  } else {
+    var modifier = 'am';
+    time = Math.floor(time); //juuuust in case it's non-int
+    if (time >= 1200) {
+      modifier = 'pm';
+      time = time - 1200;
+    }
+    var hour = Math.floor(time / 100);
+    if (hour == 0) {
+      hour = 12;
+    }
+    var minute = (time % 100).toString();
+    if (minute < 10) {
+      minute = '0' + minute;
+    }
+    return hour.toString() + ':' + minute;
+  }
+}
+
+var remove_all_selected = function() {
+  $('.selected').not('.titleBox').css('background-color', "#fff");
+  $('.selected').removeClass('selected');
+}
+
+var remove_marker = function(resource) {
+  map.remove_marker(resource);
+}

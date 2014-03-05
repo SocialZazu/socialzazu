@@ -8,7 +8,7 @@
     <div class="span5" style="margin-left:20px">
       {{> search_map}}
     </div>
-    <div class="span4" style="margin-left:20px">
+    <div class="span4">
       {{#with resource_datums}}
       {{> home_search_resources}}
       {{/with}}
@@ -16,15 +16,19 @@
   </div>
   <div class="row-fluid" style="height:100%">
     <div class="span3" id="services_home">
-      {{> services}}
+      {{> services_sidebar}}
     </div>
     <div class="span5" style="height:100%; margin-left:20px">
       {{> map_home}}
     </div>
-    <div class="span4" style="margin-left: 20px; padding-right: 20px; overflow-y: scroll;" id="display_home">
+    <div class="span4" style="margin-left: 20px; overflow-y: scroll;" id="display_home">
       {{> display_home}}
     </div>
   </div>
+</template>
+
+<template name="search_county">
+  <input id="search_counties_field" type="text" class="search-query" placeholder="Change County" style="-webkit-border-radius:14px; -moz-border-raidus:14px; margin:auto;">
 </template>
 
 <template name="search_services">
@@ -36,10 +40,15 @@
   </form>
 </template>
 
-<template name="services">
+<template name="services_sidebar">
   {{#each services}}
+  {{> service_box}}
+  {{/each}}
+</template>
+
+<template name="service_box">
   <div class="serviceBox selected" color={{color}}>
-    <div class="row-fluid">
+    <div class="row-fluid" style="position:relative; top:15px">
       <div class="span10">
         {{name}}
       </div>
@@ -48,7 +57,6 @@
       </div>
     </div>
   </div>
-  {{/each}}
 </template>
 
 <template name="search_map">
@@ -60,11 +68,9 @@
 </template>
 
 <template name="map_home">
-  <div id="map" style="height:100%">
-    {{#constant}}
-    <div id="map_canvas"></div>
-    {{/constant}}
-  </div>
+  {{#constant}}
+  <div id="map_canvas"></div>
+  {{/constant}}
 </template>
 
 <template name="home_search_resources">
@@ -94,18 +100,22 @@
     </div>
     <hr>
     <div class="row-fluid">
+      {{#with hours}}
       {{> resource_hours}}
+      {{/with}}
     </div>
     {{/with}}
   {{else}}
-    {{> show_map_resources}}
+    <div class="row-fluid">
+      {{> show_map_resources}}
+    </div>
   {{/if}}
 </template>
 
 <template name="show_map_resources">
   {{#if has_map_resources }}
     {{#each map_resources}}
-      {{> resource_contact}}
+      {{> resource_well}}
     {{/each}}
   {{else}}
     <p>Nothing to see here</p>
@@ -113,38 +123,88 @@
 </template>
 
 <template name="flag_control">
-  <div class="pull-right" >
-    <a class="flag" id="{{_id}}"><i class="fa fa-flag fa-2x {{flag_on}}"></i></a>
+  <div class="pull-right" style="cursor:pointer">
+    <a class="flag" id="{{_id}}">
+      <i class="icon-flag {{flag_on}}"></i>
+    </a>
+  </div>
+</template>
+
+<template name="resource_well">
+  <div class="box-wrapper" >
+    <div class="box">
+      <div class="controls-wrapper highcontrols-wrapper">
+
+        <div class="row-fluid">
+          <div class="span10">
+            <a style="font-size:130%" href="{{url}}">{{name}}</a>
+          </div>
+          <div class="span2">
+            {{> flag_control }}
+          </div>
+        </div>
+        <div class="row-fluid">
+          <small class="muted">
+            {{#each sub_services}}
+            <a href="#">{{name}} </a>
+            {{/each}}
+          </small>
+        </div>
+        <div class="row-fluid">
+          {{#with address}}
+          {{> resource_address}}
+          {{/with}}
+        </div>
+        <div class="row-fluid">
+          {{#with contact}}
+          {{> resource_contact}}
+          {{/with}}
+        </div>
+        <div class="row-fluid">
+          {{#with hours}}
+          {{> resource_hours}}
+          {{/with}}
+        </div>
+
+      </div>
+    </div>
+  </div>
+</template>
+
+<template name="resource_address">
+  <div class="span2">
+    Address:
+  </div>
+  <div class="span9 offset1">
+    <div class="row-fluid">
+      {{street_number}} {{street}}
+    </div>
+    <div class="row-fluid">
+      {{city}}, {{state}}, {{zipcode}}
+    </div>
   </div>
 </template>
 
 <template name="resource_contact">
-  {{> flag_control }}
-  <div class="well" >
+  <div class="span2">
+    Contact:
+  </div>
+  <div class="span9 offset1">
+    {{#if contact_person}}
     <div class="row-fluid">
-      <div class="span2">
-        Address:
-      </div>
-      <div class="span10">
-        {{streetNumber}} {{street}}, {{city}}, {{state}} {{zipcode}}
-      </div>
+      {{contact_person}}
     </div>
+    {{/if}}
+    {{#if phone}}
     <div class="row-fluid">
-      <div class="span2">
-        Email:
-      </div>
-      <div class="span10">
-        {{email}}
-      </div>
+      {{phone}}
     </div>
+    {{/if}}
+    {{#if email}}
     <div class="row-fluid">
-      <div class="span2">
-        Phone:
-      </div>
-      <div class="span10">
-        {{phone}}
-      </div>
+      {{email}}
     </div>
+    {{/if}}
   </div>
 </template>
 
@@ -153,8 +213,20 @@
     <div class="span2">
       Hours:
     </div>
-    <div class="span10">
-      9am - 5pm
+    <div class="span9 offset1">
+      <ul style="list-style-type: none; margin-left:0px">
+      {{#each day_of_week}}
+      <li style="clear:both">
+        <span style="float:left; margin-right:10px">{{day}}:&nbsp;</span>
+        {{#if closed}}
+        <span style="float:left; margin-right:10px">Closed</span>
+        {{else}}
+        <span style="float:left; margin-right:10px">{{open}}</span>
+        <span style="float:left">{{close}}</span>
+        {{/if}}
+      </li>
+      {{/each}}
+      </ul>
     </div>
   </div>
 </template>
