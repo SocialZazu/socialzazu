@@ -4,6 +4,7 @@ Deps.autorun(function() {
   Meteor.subscribe(
     'resources_from_services',
     Session.get('display_services'),
+    Session.get('county'),
     function() {
       Session.set(
         'resources_from_services',

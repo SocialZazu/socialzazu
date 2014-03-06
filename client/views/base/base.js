@@ -5,6 +5,12 @@ Deps.autorun(function() {
       Session.set('county', Counties.findOne({name:"Alameda"}));
     }
   });
+  if (Roles.userIsInRole(Meteor.userId(), ['editor', 'admin'])) {
+    console.log('subscribing to open flags with county: ' + Session.get('county'));
+    Meteor.subscribe('open_flags', Session.get('county'))
+  }
+  console.log('subscribing to resources_from_county');
+  Meteor.subscribe('resources_from_county', Session.get('county'))
 });
 
 Template.base.helpers({

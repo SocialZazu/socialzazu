@@ -5,7 +5,8 @@ Meteor.methods({
 
   flag_resource: function(resource_id, user_id) {
     var timestamp = (new Date()).getTime();
-    flag_id = Flags.insert({creation_time:timestamp, resource_id:resource_id, user_id:user_id, open:true, closed_time:null});
+    var counties = Resources.findOne({_id:resource_id}).locations.service_areas
+    flag_id = Flags.insert({created_time:timestamp, resource_id:resource_id, user_id:user_id, open:true, closed_time:null, counties:service_areas});
   },
 
   remove_all_services: function() {
