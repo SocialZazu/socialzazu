@@ -30,50 +30,51 @@ Template.choose_category.helpers({
   },
 });
 
-Template.display_flags.events({
-  'click button': function(e, tmpl) {
-    var resource_id = $(e.target).attr("resource_id");
-    console.log(resource_id);
-    Session.set('resource_id', resource_id);
-  }
-});
-
-Template.display_flags.helpers({
-  num_flags: function() {
-    var count = Flags.find({open:true}).count();
-    if (count == 1) {
-      return count + " Open Flag";
-    } else if (count > 1) {
-      return count + " Open Flags";
-    } else {
-      return "No Open Flags";
-    }
-  },
-  resource_name: function() {
-    return Resources.find({_id:this.resource_id}).name
-  }
-});
-
 Template.editor.created = function() {
   Session.set('category_id', null);
   Session.set('resource_id', null);
+  Session.set('has_county_select', true);
+}
+
+Template.editor.destroyed = function() {
+  Session.set('category_id', null);
+  Session.set('resource_id', null);
+  Session.set('has_county_select', false);
 }
 
 Template.editor.helpers({
+  has_needs_edit: function() {
+    return Resources.find({needs_edit:true}).count() > 0
+  },
+  has_open_flags: function() {
+    return Flags.find({open:true}).count() > 0
+  },
   resource_datums: function() {
     return Resources.find({}).map(function(resource) {
       return {value:resource.name, name_route:resource._id}
     });
   },
-  show_new_resource: function() {
-    return Session.get('category_id') !== null;
+  resource: function() {
+    return Resources.findOne({_id:Session.get('resource_id')});
   },
   show_edit_resource: function() {
     return Session.get('resource_id') !== null;
-  },
-  show_flags: function() {
-    return Session.get('resource_id') == null && Session.get('category_id') == null;
   }
+});
+
+Template.edit_resource.helpers({
+  name_field: function() {
+    return {
+      current: this.name,
+      field: 'name'
+    }
+  },
+  url_field: function() {
+    return {
+      current: this.url,
+      field: 'url'
+    }
+  },
 });
 
 Template.edit_search_resources.rendered = function() {
@@ -89,11 +90,26 @@ Template.edit_search_resources.rendered = function() {
     displayKey: 'value',
     source: datums.ttAdapter()
   }).on('typeahead:selected', function(event, datum) {
-    console.log(datum);
-    console.log('seelcted');
     Session.set('resource_id', datum.name_route);
   });
 }
+
+Template.needs_edit.helpers({
+  resources: function() {
+    console.log(Resources.find({needs_edit:true}, {limit:10}).fetch())
+    return Resources.find({needs_edit:true}, {limit:10})
+  },
+  info_from_edit: function() {
+    var timestamp = this.created_time || this.updated_time;
+    if (!timestamp) {
+      timestamp = this._id.getTimestamp();
+    }
+    return {
+      created_time: timestamp,
+      resource: this
+    }
+  }
+});
 
 Template.new_resource.helpers({
   resource_fields: function(type) {
@@ -108,4 +124,41 @@ Template.new_resource.helpers({
   show_submit: function() {
     return this !== null;
   }
+});
+
+Template.open_flags.events({
+  'click button': function(e, tmpl) {
+    var resource_id = $(e.target).attr("resource_id");
+    Session.set('resource_id', resource_id);
+  }
+});
+
+Template.open_edit.helpers({
+  created: function() {
+    var date = new Date(this.created_time);
+    var month = date.getMonth() + 1;
+    var day   = date.getDate();
+    var hour  = date.getHours();
+    var minutes = date.getMinutes();
+    return month + '/' + day + ', '+ hour + ':' + minutes;
+  },
+  resource: function() {
+    console.log(this.resource);
+    return this.resource
+  },
+  resource_id: function() {
+    return this.resource._id
+  }
+});
+
+Template.open_flags.helpers({
+  flags: function() {
+    return Flags.find({open:true}, {sort:{created_time:1}});
+  },
+  info_from_flag: function() {
+    return {
+      created_time: this.created_time,
+      resource: Resources.findOne({_id:this.resource_id})
+    }
+  },
 });
