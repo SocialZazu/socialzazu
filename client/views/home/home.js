@@ -49,6 +49,13 @@ Template.home.created = function() {
   Session.set('display_resource', null);
   Session.set('display_services', []); //all in sidebar
   Session.set('visible_services', []); //the ones shown on map
+  Session.set('has_county_select', true);
+}
+
+Template.home.destroyed = function() {
+  Session.set('map_markers_in_view', []);
+  Session.set('resources_from_services', []);
+  Session.set('has_county_select', false);
 }
 
 Template.home.helpers({
@@ -60,11 +67,6 @@ Template.home.helpers({
   resource_datums: function() {
     return Resources.find().map(function(resource) {
       return {value:resource.name, name_route:resource._id}
-    });
-  },
-  county_datums: function() {
-    return Counties.find().map(function(county) {
-      return {value:county.name, _id:county._id};
     });
   },
 });
@@ -90,7 +92,6 @@ Template.home.rendered = function() {
                 }
               )
              );
-
   $('#search_services_form').outerWidth($('#services_home').width());
   $('#search_map_field').outerWidth($('#map_canvas').width())
 }
@@ -143,15 +144,69 @@ Template.map_home.destroyed = function() {
   Session.set('map', false);
 };
 
+Template.resource_access.helpers({
+  fields: function() {
+    return Object.keys(this).sort();
+  },
+  values: function() {
+    var dict = this;
+    return Object.keys(this).sort().map(function(field) {
+      return dict[field]
+    })
+  }
+});
+
 Template.resource_well.helpers({
   sub_services: function() {
     return Services.find({_id:{$in:this.sub_service_ids}}, {name:true});
+  },
+  address: function() {
+    return this.locations.address;
+  },
+  contact: function() {
+    var loc = this.locations;
+    return {
+      name:loc.contacts.name,
+      title:loc.contacts.title,
+      phones:loc.phones,
+      url:loc.internet_resource.url,
+      email:loc.internet_resource.email
+    }
+  },
+  has_hours: function() {
+    return this.location.hours.length > 0;
+  },
+  hours: function() {
+    return this.locations.hours;
+  },
+  short_desc: function() {
+    return this.locations.short_desc;
+  },
+  has_access: function() {
+    var values = get_values_from_fields(this.locations, ['accessibility', 'audience', 'eligibility', 'fees', 'transportation', 'wait'])
+    return values.length > 0;
+  },
+  access: function() {
+    return get_values_from_fields(this.locations, ['accessibility', 'audience', 'eligibility', 'fees', 'transportation', 'wait'])
+  },
+  languages: function() {
+    return this.locations.languages;
+  },
+  how_to_apply: function() {
+    return this.locations.services.how_to_apply
   },
 });
 
 Template.resource_hours.helpers({
   day_of_week: function() {
-    return [this.m, this.tu, this.w, this.th, this.f, this.sa, this.su];
+    var fields = ['m', 'tu', 'w', 'th', 'f', 'sa', 'su'];
+    var ret = [];
+    for (var i = 0; i < fields.length; i++) {
+      if (fields[i] in this) {
+        ret.push(this[fields[i]]);
+      }
+    }
+    return ret;
   },
   closed: function() {
     return this.closed || (!this.open_time && !this.close_time);
@@ -165,23 +220,7 @@ Template.resource_hours.helpers({
 });
 
 Template.search_map.rendered = function() {
-//   initialize_map_search();
-}
-
-Template.search_county.rendered = function() {
-  var data = this.data;
-  var counties_datums = new Bloodhound({
-    datumTokenizer: function(d) { return Bloodhound.tokenizers.whitespace(d.value); },
-    queryTokenizer: Bloodhound.tokenizers.whitespace,
-    local: data
-  });
-  counties_datums.initialize();
-  $('#search_counties_field').typeahead(null, {
-    displayKey:'value',
-    source: counties_datums.ttAdapter()
-  }).on('typeahead:selected', function(event, datum) {
-    Session.set('county', datum._id);
-  });
+  initialize_map_search();
 }
 
 Template.search_services.rendered = function() {
@@ -382,4 +421,15 @@ var remove_all_selected = function() {
 
 var remove_marker = function(resource) {
   map.remove_marker(resource);
+}
+
+var get_values_from_fields = function(loc, fields) {
+  var ret = {};
+  fields.forEach(function(field) {
+    var value = loc[field];
+    if (value && value.length > 0) {
+      ret[field] = value
+    }
+  });
+  return ret
 }

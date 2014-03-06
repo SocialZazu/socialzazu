@@ -96,7 +96,7 @@ map = {
   // initialize the map
   initialize_map: function() {
     var mapOptions = {
-      zoom: 13,
+      zoom: 12,
       center: new google.maps.LatLng(37.748933,-122.422632),
       mapTypeId: google.maps.MapTypeId.ROADMAP
     };
@@ -144,7 +144,6 @@ map = {
     var bounds = this.gmap.getBounds();
     for (var i = 0; i < this.markers.length; i++) {
       if (bounds.contains(this.markers[i].position) && this.markers[i].map) {
-        console.log('past marker_service_visible');
         markerIDs.push(this.markerIDs[i].slice(0,-2));
       }
     }
