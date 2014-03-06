@@ -11,6 +11,11 @@
           <span class="icon-bar"></span>
         </a>
         <a class="brand" href="{{pathFor 'home'}}">SocialZazu</a>
+        {{#if has_county_select}}
+        <div class="pull-right">
+          {{> select_county}}
+        </div>
+        {{/if}}
         <div class="pull-right">
           <ul id="loginButtons" class="nav">{{accountButtons}}</ul>
         </div>
@@ -37,4 +42,13 @@
 
 <template name="notFound">
   <p style="margin:auto; text-align:center; width:50%">We didn't find anything. Also, this page is not fleshed out. Please go back; I'm embarrased.</p>
+</template>
+
+<template name="select_county">
+  <select class="form-control" style="position:relative; top:10px;">
+    <option value="current">{{current_county_name}}</option>
+    {{#each other_counties}}
+    <option value="{{_id}}">{{name}}</option>
+    {{/each}}
+  </select>
 </template>
