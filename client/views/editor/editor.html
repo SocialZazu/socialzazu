@@ -1,18 +1,11 @@
 <template name="editor">
   <div class="row-fluid">
     <div class="span6">
-      <section class="well" style="height:40px">
-        <div class="row-fluid">
-          <div class="span4">
-            <h5>Edit A Resource</h5>
-          </div>
-          <div class="span8">
-            {{#with resource_datums}}
-            {{> edit_search_resources}}
-            {{/with}}
-          </div>
-        </div>
-      </section>
+      <div class="row-fluid">
+        {{#with resource_datums}}
+        {{> edit_search_resources}}
+        {{/with}}
+      </div>
       <section class="well">
         {{#if has_needs_edit}}
         <div class="row-fluid">
@@ -32,7 +25,7 @@
         {{/if}}
       </section>
     </div>
-    <div class="span6" style="overflow-y:scroll; height:650px">
+    <div class="span6">
       {{#if show_edit_resource}}
         {{#with resource}}
         {{> edit_resource}}
@@ -44,18 +37,24 @@
 </template>
 
 <template name="edit_address">
-  <div class="row-fluid">
+  <div class="row-fluid edit_address" index="{{index}}">
     <div class="span3">
       Address
     </div>
-    <div class="span4" id="street">
-      {{street}}
+    <div class="span4">
+      {{#with toggle "street"}}
+      {{> is_editing_toggle}}
+      {{/with}}
     </div>
-    <div class="span3" id="city">
-      {{city}}
+    <div class="span3">
+      {{#with toggle "city"}}
+      {{> is_editing_toggle}}
+      {{/with}}
     </div>
-    <div class="span2" id="zipcode">
-      {{zipcode}}
+    <div class="span2">
+      {{#with toggle "zipcode"}}
+      {{> is_editing_toggle}}
+      {{/with}}
     </div>
   </div>
 </template>
@@ -76,11 +75,7 @@
       {{field}}:
     </div>
     <div class="span9">
-      {{#if is_editing}}
-      <input type="text" style="width:inherit" placeholder="{{current}}" id="{{field}}_input">
-      {{else}}
-      {{current}}
-      {{/if}}
+      {{> is_editing_toggle toggle_info}}
     </div>
   </div>
   <br>
@@ -144,8 +139,9 @@
   <div class="row-fluid">
     {{> edit_buttons}}
   </div>
-  <div class="row-fluid">
+  <div class="row-fluid" style="overflow-y:scroll; height:610px; margin-top:10px">
     {{> edit_field name}}
+    {{> edit_sub_services sub_services}}
     {{> edit_field url}}
     {{> edit_field email}}
     {{#each contacts}} <!--TODO allow for removing contacts-->
@@ -156,6 +152,7 @@
     {{> edit_address}}
     {{/each}}
     {{> edit_field short_desc}}
+    {{> edit_field description}}
     {{> edit_hours hours}}
     {{> edit_field transportation}}
     {{> edit_field audience}}
@@ -167,6 +164,43 @@
 
 <template name="edit_search_resources">
   {{> search_resources}}
+</template>
+
+<template name="edit_sub_services">
+  <div class="row-fluid">
+    <div class="span3">
+      Categories:
+    </div>
+    <div class="span9">
+      {{#if is_editing}}
+      {{#each sub_services}}
+      <a class="btn btn-default btn-small remove_service" style="margin-bottom:3px" href="#" id="{{_id}}">
+        <i class="icon-remove"></i> {{name}}
+      </a>
+      {{/each}}
+      {{#with sub_service_ids}}
+      <div class="row-fluid" style="margin-top:{{margin_top}}">
+        {{> select_service}}
+      </div>
+      {{/with}}
+      {{else}}
+      {{#each sub_services}}
+      <a class="btn btn-default btn-small" href="#">
+        {{name}}
+      </a>
+      {{/each}}
+      {{/if}}
+    </div>
+</template>
+
+<template name="is_editing_toggle">
+  <div class="row-fluid">
+    {{#if is_editing}}
+    <input type="text" style="width:{{width}}" placeholder="{{current}}" id="{{id}}_input">
+    {{else}}
+    {{current}}
+    {{/if}}
+  </div>
 </template>
 
 <template name="needs_edit">
@@ -181,15 +215,9 @@
 <template name="open_edit">
   <hr>
   <div class="row-fluid">
-    <div class="span9">
-      {{#with resource}}
-      <a style="font-size:110%" flag_or_edit="{{../type}}" resource_id="{{_id}}" href="#">{{name}}</a>
-      {{/with}}
-    </div>
-    <div class="span3" style="pull-right">
-      {{created}}
-    </div>
-    </div>
+    {{#with resource}}
+    <a style="font-size:110%" flag_or_edit="{{../type}}" resource_id="{{_id}}" href="#">{{name}}</a>
+    {{/with}}
   </div>
 </template>
 
@@ -202,3 +230,11 @@
   </div>
 </template>
 
+<template name="select_service">
+  <select class="form-control">
+    <option value="instr">Add a Category</option>
+    {{#each other_services}}
+    <option value="{{_id}}">{{name}}</option>
+    {{/each}}
+  </select>
+</template>

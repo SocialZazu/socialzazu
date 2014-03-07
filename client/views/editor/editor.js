@@ -20,9 +20,12 @@ Template.editor.helpers({
     return Flags.find({open:true}).count() > 0
   },
   resource_datums: function() {
-    return Resources.find({}).map(function(resource) {
-      return {value:resource.name, name_route:resource._id}
-    });
+    return {
+      datums: Resources.find({}).map(function(resource) {
+        return {value:resource.name, name_route:resource._id}
+      }),
+      placeholder:"Search Resource to Edit"
+    }
   },
   resource: function() {
     return Resources.findOne({_id:Session.get('resource_id')});
@@ -32,31 +35,33 @@ Template.editor.helpers({
   }
 });
 
-Template.editor.rendered = function() {
-  Deps.autorun(function() {
-    Meteor.subscribe(
-      'resources_from_county',
-      Session.get('county'),
-      function() {Session.set('resource_id', null)}
-    );
-  });
-  if (Session.get('resource_id') == null) {
-    var resource = Resources.findOne({needs_edit:true});
-    if (!resource) {
-      var flag = Flags.findOne({open:true});
-      if (flag) {
-        resource = Resources.findOne({_id:flag.resource_id})
-      }
+Deps.autorun(function() {
+  Meteor.subscribe(
+    'resources_from_county',
+    Session.get('county')
+  )
+});
+
+Template.edit_address.helpers({
+  toggle: function(key) {
+    console.log(this);
+    var width = null;
+    if (key == 'zipcode') {
+      width = '46px'
     }
-    if (resource) {
-      Session.set('resource_id', resource._id);
+    return {
+      current:this[key],
+      id:key + '_' + this.index,
+      width:width
     }
-  }
-}
+  },
+});
 
 Template.edit_buttons.events({
   'click #save_resource': function(e, tmpl) {
     //save edits made
+    Meteor.call('save_resource_edits', Session.get('resource_id'),
+                Meteor.userId(), collate_edits());
   },
   'click #cancel_edits': function(e, tmpl) {
     //cancel edits made, revert back div mode
@@ -64,12 +69,12 @@ Template.edit_buttons.events({
   },
   'click #edit_resource': function(e, tmpl) {
     //enter div mode
-    console.log('is editing true');
     Session.set('is_editing', true);
   },
   'click #mark_complete': function(e, tmpl) {
-    //close all flags with this resource_id
+    //close all flags with this resource's _id
     //mark needs_edit to false
+    Meteor.call('mark_complete', Session.get('resource_id'), Meteor.userId());
   }
 });
 
@@ -80,8 +85,11 @@ Template.edit_buttons.helpers({
 });
 
 Template.edit_field.helpers({
-  is_editing: function() {
-    return Session.get('is_editing');
+  toggle_info: function() {
+    return {
+      current: this.current,
+      id: this.field + '_input'
+    }
   }
 });
 
@@ -133,7 +141,12 @@ Template.edit_hours_subfield.helpers({
 
 Template.edit_resource.helpers({
   addresses: function() {
-    return this.locations.address;
+    var i = -1;
+    return this.locations.address.map(function(address) {
+      i += 1;
+      return {index:i, zipcode:address.zipcode,
+              city:address.city, street:address.street};
+    });
   },
   audience: function() {
     return {
@@ -154,6 +167,12 @@ Template.edit_resource.helpers({
     return {
       current: clean(this.title),
       field: 'Contact Title'
+    }
+  },
+  description: function() {
+    return {
+      current: clean(this.locations.description),
+      field: 'Description'
     }
   },
   eligibility: function() {
@@ -195,10 +214,16 @@ Template.edit_resource.helpers({
       field: 'Short Desc'
     }
   },
+  sub_services: function() {
+    return {
+      resource_id: this._id,
+      service_ids: this.sub_service_ids
+    }
+  },
   transportation: function() {
     return {
       current: clean(this.locations.transportation),
-      field: 'Transport'
+      field: 'Transportation'
     }
   },
   url: function() {
@@ -210,7 +235,7 @@ Template.edit_resource.helpers({
 });
 
 Template.edit_search_resources.rendered = function() {
-  var data = this.data;
+  var data = this.data.datums;
   var datums = new Bloodhound({
     datumTokenizer: function(d) { return Bloodhound.tokenizers.whitespace(d.value); },
     queryTokenizer: Bloodhound.tokenizers.whitespace,
@@ -228,15 +253,51 @@ Template.edit_search_resources.rendered = function() {
   $('.search-query.tt-hint').width('inherit');
 }
 
+Template.edit_sub_services.events({
+  'click .remove_service': function(e, tmpl) {
+    var service_id = $(tmpl.find('.remove_service')).attr('id');
+    Meteor.call('remove_service_from_resource', Session.get('resource_id'), service_id);
+  }
+});
+
+Template.edit_sub_services.helpers({
+  is_editing: function() {
+    return Session.get('is_editing');
+  },
+  margin_top: function() {
+    if (this.ids && this.ids.length > 0) {
+      return "6px";
+    } else {
+      return "3px"
+    }
+  },
+  sub_services: function() {
+    return Services.find({_id:{$in:this.service_ids}}, {sort:{name:1}})
+  },
+  sub_service_ids: function() {
+    return {
+      ids: this.service_ids,
+      _id: this.resource_id
+    }
+  }
+})
+
+Template.is_editing_toggle.helpers({
+  is_editing: function() {
+    return Session.get('is_editing');
+  },
+  width: function() {
+    var width = this.width || "90%"
+    return width;
+  }
+});
+
 Template.needs_edit.helpers({
   resources: function() {
     return Resources.find({needs_edit:true}, {limit:10})
   },
   info_from_edit: function() {
-    var timestamp = this.created_time || this.updated_time;
-    if (!timestamp) {
-      timestamp = this._id.getTimestamp();
-    }
+    var timestamp = this.created_time || this.updated_time || '';
     return {
       created_time: timestamp,
       resource: this,
@@ -254,6 +315,9 @@ Template.open_edit.events({
 
 Template.open_edit.helpers({
   created: function() {
+    if (this.created_time == '') {
+      return ''
+    };
     var date = new Date(this.created_time);
     var month = date.getMonth() + 1;
     var day   = date.getDate();
@@ -276,11 +340,87 @@ Template.open_flags.helpers({
   },
 });
 
+Template.select_service.events({
+  'change select': function(e, tmpl) {
+    var service_id = $(e.target).val();
+    if (!(service_id == 'instr')) {
+      var resource_id = this._id;
+      Meteor.call('add_service_to_resource', resource_id, service_id);
+    }
+  }
+});
+
+Template.select_service.helpers({
+  other_services: function() {
+    return Services.find({_id:{$not:{$in:this.ids}}}, {sort:{name:1}});
+  }
+});
+
+var _single_address_edits = function(index, key) {
+  var val = $('#' + key + '_' + index + '_input').val();
+  if (val == '') {
+    return null;
+  } else {
+    return val.trim();
+  }
+}
+
+var collate_address_edits = function() {
+  var ret = []
+  var addrss = $('.edit_address');
+  var fields = ['street', 'city', 'zipcode'];
+  for (var i = 0; i < addrss.length; i++) {
+    var index = addrss[i].getAttribute('index');
+    var change = {}
+    var has_edit = false;
+    fields.forEach(function(field) {
+      var edit = _single_address_edits(index, field);
+      if (edit) {
+        change[field] = edit;
+        has_edit = true;
+      }
+    });
+    if (has_edit) {
+      ret.push(change);
+    }
+  }
+}
+
+var collate_edit = function(field) {
+  var id = '#' + field + '_input';
+  val = $(id).val();
+  if (val == '') {
+    return null;
+  } else {
+    return val;
+  }
+}
+
+var collate_edits = function() {
+  var ret = {}
+  var fields = ['Audience', 'Contact Name', 'Contact Title', 'Description',
+                'Short Desc', 'Eligibility', 'Email', 'Fees', 'How To Apply',
+                'Name', 'Transportation', 'Website']
+  fields.forEach(function(field) {
+    var edit = collate_edit(field);
+    if (edit) {
+      ret[field] = edit;
+    }
+  });
+  ret['hours'] = collate_hours_edits()
+  ret['address'] = collate_address_edits()
+  return ret;
+}
+
+var collate_hours_edits = function() {
+
+}
+
 var clean = function(current) {
   if (!current) {
-    return "[Blank]";
+    return "";
   }
-  return current;
+  return current.trim();
 }
 
 var obj_clean = function(obj, key) {
@@ -291,7 +431,7 @@ var obj_clean = function(obj, key) {
 
 var time_placeholder = function(time) {
   if (!time) {
-      return '0000';
+      return 'Blank';
   }
   var st = time.toString();
   if (st.length == 3) {
