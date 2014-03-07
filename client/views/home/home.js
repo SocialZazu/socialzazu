@@ -45,14 +45,17 @@ Template.home.destroyed = function() {
 }
 
 Template.home.helpers({
+  resource_datums: function() {
+    return {
+      datums: Resources.find().map(function(resource) {
+        return {value:resource.name, name_route:resource._id}
+      }),
+      placeholder: "Search Resource to Show"
+    }
+  },
   service_datums: function() {
     return Services.find().map(function(service) {
       return {value:service.name, name_route:service.name_route}
-    });
-  },
-  resource_datums: function() {
-    return Resources.find().map(function(resource) {
-      return {value:resource.name, name_route:resource._id}
     });
   },
 });
@@ -94,7 +97,6 @@ Template.home.rendered = function() {
           sub_service_ids:{
             $in:service_ids
           }}).forEach(function(resource) {
-            console.log(resource);
             add_marker(resource);
           });
       });
@@ -103,7 +105,7 @@ Template.home.rendered = function() {
 }
 
 Template.home_search_resources.rendered = function() {
-  var data = this.data;
+  var data = this.data.datums;
   var datums = new Bloodhound({
     datumTokenizer: function(d) { return Bloodhound.tokenizers.whitespace(d.value); },
     queryTokenizer: Bloodhound.tokenizers.whitespace,
