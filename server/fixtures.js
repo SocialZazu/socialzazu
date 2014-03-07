@@ -194,13 +194,6 @@ Meteor.startup(function() {
         ],
         "Sister Estela",
         {
-          m:{open_time:830, close_time:1700, day:'Mon'},
-          tu:{open_time:805, close_time:1750, day:'Tue'},
-          w:{open_time:900, close_time:2232, day:'Wed'},
-          th:{open_time:900, close_time:1900, day:'Thu'},
-          f:{open_time:1020, close_time:1700, day:'Fri'},
-          sa:{closed:true, day:'Sat'},
-          su:{closed:true, day:'Sun'}
         },
         transportation=null,
         accessibility=[],
@@ -242,13 +235,9 @@ Meteor.startup(function() {
            'Shona Baum',
          ],
          hours:{
-           m:{open_time:900, close_time:1700, day:'Mon'},
-           tu:{open_time:900, close_time:1700, day:'Tue'},
-           w:{open_time:900, close_time:1700, day:'Wed'},
-           th:{open_time:900, close_time:1900, day:'Thu'},
-           f:{open_time:900, close_time:1700, day:'Fri'},
-           sa:{open_time:1100, close_time:1700, day:'Sat'},
-           su:{closed:true, day:'Sun'}
+           m_f:{open_time:900, close_time:1700, day:'Mon-Fri'},
+           sat:{open_time:1100, close_time:1700, day:'Sat'},
+           sun:{closed:true, day:'Sun'}
          },
          transportation:null,
          accessibility: [],
