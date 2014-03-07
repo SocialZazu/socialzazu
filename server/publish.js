@@ -33,7 +33,7 @@ Meteor.publish('resources_from_county', function(county) {
   if (!county) {
     return [];
   }
-  return Resources.find({service_areas:county._id});
+  return Resources.find({service_areas:county._id}, {limit:30});
 });
 
 Meteor.publish('resources_from_services', function(services, county) {
@@ -43,15 +43,15 @@ Meteor.publish('resources_from_services', function(services, county) {
   service_ids = services.map(function(service) {
     return service._id;
   });
-  return Resources.find({sub_service_ids:{$in:service_ids}, service_areas:county._id});
+  return Resources.find({sub_service_ids:{$in:service_ids}, service_areas:county._id}, {limit:30});
 });
 
 Meteor.publish('service_name_route', function(name_route) {
   return Services.find({name_route:name_route});
 });
 
-Meteor.publish('services', function() {
-  return Services.find({});
+Meteor.publish('sub_services', function() {
+  return Services.find({parents:{$exists:true, $ne:null}});
 });
 
 //change to incorporate some metric
