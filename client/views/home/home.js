@@ -1,20 +1,5 @@
 PAN_TO_ME = false;
 
-Deps.autorun(function() {
-  Meteor.subscribe(
-    'resources_from_services',
-    Session.get('display_services'),
-    Session.get('county'),
-    function() {
-      Session.set(
-        'resources_from_services',
-        Resources.find({}).fetch()
-      );
-      //TODO: make this update the resources available on map
-    }
-  );
-});
-
 Template.display_home.helpers({
   resource: function() {
     return !(Session.get('display_resource') == null);
@@ -76,25 +61,45 @@ var colors = ["#74F0F2", "#B3F2C2", "#DCFA9B", "#FABDFC", "#F5A2AD",
               "#BDC9FC", "#A2B2F5", "#F5E1A2", "#AEF5A2", "#42F55D"];
 Template.home.rendered = function() {
   var i = -1;
-  Session.set(
-    'display_services',
-    this.data.services.map(
-      function(service) {
-        i += 1;
-        return {color:colors[i], name:service.name, name_route:service.name_route,
-                _id:service._id};
-      }
-    )
-  );
-  Session.set('visible_services',
-              this.data.services.map(
-                function(service) {
-                  return service._id;
-                }
-              )
-             );
+  if (!Session.get('display_services') || Session.get('display_services').length == 0) {
+    Session.set(
+      'display_services',
+      this.data.services.map(
+        function(service) {
+          i += 1;
+          return {color:colors[i], name:service.name, name_route:service.name_route,
+                  _id:service._id};
+        }
+      )
+    );
+    Session.set(
+      'visible_services',
+      this.data.services.map(
+        function(service) {
+          return service._id;
+        }
+      )
+    );
+  }
+  Deps.autorun(function() {
+    Meteor.subscribe(
+      'resources_from_services',
+      Session.get('display_services'),
+      Session.get('county'),
+      function() {
+        var service_ids = Session.get('display_services').map(
+          function(service) {return service._id}
+        );
+        Resources.find({
+          sub_service_ids:{
+            $in:service_ids
+          }}).forEach(function(resource) {
+            console.log(resource);
+            add_marker(resource);
+          });
+      });
+  });
   $('#search_services_form').outerWidth($('#services_home').width());
-  $('#search_map_field').outerWidth($('#map_canvas').width())
 }
 
 Template.home_search_resources.rendered = function() {
@@ -132,13 +137,7 @@ Template.map_home.rendered = function() {
       Session.set('map_markers_in_view', map.markers_in_bounds());
     });
   }
-
-  Deps.autorun(function() {
-    _.each(Session.get('resources_from_services'), function(resource) {
-      //TODO: make this a diff change, not an all change.
-      add_marker(resource);
-    });
-  });
+  $('#search_map_field').outerWidth($('#map_canvas').width())
 }
 
 Template.map_home.destroyed = function() {
