@@ -19,7 +19,7 @@
 //             state:String,
 //             zip:String,
 //             type:String (physical / mailing),
-//             geo: { //Not in Ohana Spec
+//             spatial_location: {
 //               lat:String,
 //               lng:String
 //             }
@@ -29,11 +29,13 @@
 //           String (e.g. Kathy Kinkaid (kkinkaid@mpslc.com))
 //         ],
 //         hours: { //Ohana Spec only has String here
-//           m:{open_time:Int (military), close_time:Int, closed:Boolean}
+//           m_f:{open_time:Int (military), close_time:Int, closed:Boolean},
+//           sat:{open_time:Int (military), close_time:Int, closed:Boolean},
+//           sun:{open_time:Int (military), close_time:Int, closed:Boolean},
 //         },
 //         transportation:String,
 //         accessibility: [
-//           String (e.g. restroom / wheelchair / ramp / special parking / deaf (interpreter or deaf) / blind (blind or braille))
+//           String (e.g. restroom / elevator / wheelchair / ramp / special parking / deaf (interpreter or deaf) / blind (blind or braille))
 //         ],
 //         languages: [
 //           String
@@ -45,29 +47,22 @@
 //             type:String (voice / fax)
 //           }
 //         ],
-//         internet_resource: [
+//         internet_resource: {
 //           url:String,
 //           email:String
-//         ],
-//         services: [
-//           {
+//         },
+//         services: {
 //             audience:String,
 //             eligibility:String,
 //             fees:String,
 //             how_to_apply:String,
-//             service_areas:[
-//               String (county_ids)
-//             ],
-//             service_id:String, //Arbitrarily, at most 1, Not in Ohana... replacing their keywords, reason being this is finer control
-//             sub_service_ids:[ //Arbitrarily, at most 3, Not in Ohana
-//               String (service_ids)
-//             ],
-//             wait:String,
-//             funding_sources: [
-//               String (e.g. Fees)
-//             ]
-//           }
-//         ]
+//         },
+//         service_areas:[
+//           String (county_ids)
+//         ],
+//         sub_service_ids:[
+//           String (service_ids)
+//         ],
 //       }
 //     ]
 //    }
@@ -116,7 +111,7 @@ make_resource = function(name, timestamp, location, service_areas, sub_services)
     var resource_id = Resources.insert(
       {
         name:name, created_time:timestamp, name_route:make_name_route(name),
-        locations:location, service_areas:service_areas, sub_services:sub_services
+        locations:location, service_areas:service_areas, sub_service_ids:sub_services
       }
     );
     return resource_id;

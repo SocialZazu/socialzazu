@@ -1,5 +1,5 @@
 // Services are types of resources. Many-to-Many with Resources
-// {name:String, resources:[], name_route:String, creation_time:Int, updated_time:Int, patient_inputs:[input_ids] resource_inputs:[input_ids], children:[], parent:service_id or null if a parent}
+// {name:String, resources:[], name_route:String, created_time:Int, updated_time:Int, patient_inputs:[input_ids] resource_inputs:[input_ids], children:[], parent:service_id or null if a parent}
 Services = new Meteor.Collection('services');
 
 make_parent_service = function(name, creation_time, init_priority) {
