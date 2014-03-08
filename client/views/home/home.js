@@ -1,21 +1,5 @@
 PAN_TO_ME = false;
 
-Template.display_home.helpers({
-  resource: function() {
-    return !(Session.get('display_resource') == null);
-  },
-  services: function() {
-    return Services.find({_id:{$in:Session.get('display_resource').services}});
-  },
-  flag_on: function() {
-    if (this.flags.indexOf(Session.get('display_resource')._id) > -1) {
-        return 'red';
-    } else {
-        return '';
-    }
-  },
-});
-
 Template.flag_control.events({
   'click .flag': function(e, tmpl) {
     flag = $(tmpl.find('.icon-flag'));
@@ -48,7 +32,7 @@ Template.home.helpers({
   resource_datums: function() {
     return {
       datums: Resources.find().map(function(resource) {
-        return {value:resource.name, name_route:resource._id}
+        return {value:resource.name, _id:resource._id}
       }),
       placeholder: "Search Resource to Show"
     }
@@ -118,7 +102,15 @@ Template.home_search_resources.rendered = function() {
     displayKey: 'value',
     source: datums.ttAdapter()
   }).on('typeahead:selected', function(event, datum) {
-    Router.go('/resource/' + datum.name_route);
+    var resource = Resources.findOne({_id:datum._id});
+    if (resource) {
+      var address = resource.locations.address[0];
+      if (address) {
+        var coords = address.spatial_location;
+        map.panTo(new google.maps.LatLng(coords.lat, coords.lng));
+      }
+      Session.set('display_resource', resource)
+    }
   });
 };
 
@@ -307,16 +299,27 @@ Template.show_map_resources.helpers({
     return Session.get('map_markers_in_view').length > 0;
   },
   map_resources: function() {
-    return Resources.find({_id:{$in:Session.get('map_markers_in_view')}}).map(function(resource) {
+    var ret = [];
+    var display_resource = Session.get('display_resource');
+    var display_services = Session.get('display_services');
+    var visible_services = Session.get('visible_services');
+    console.log(display_resource);
+    if (display_resource) {
+      var resource_id = display_resource._id;
+      ret.push(display_resource);
+    } else {
+      var resource_id = "blank";
+    }
+    Resources.find({_id:{$in:Session.get('map_markers_in_view'), $ne:resource_id}}).forEach(function(resource) {
       var services = resource.sub_service_ids;
-      var display = Session.get('display_services');
-      for (var i = 0; i < display.length; i++) {
-        if (Session.get('visible_services').indexOf(display[i]._id) > -1 && resource.sub_service_ids.indexOf(display[i]._id) > -1) {
-          return resource;
-          break;
+      for (var i = 0; i < display_services.length; i++) {
+        if (visible_services.indexOf(display_services[i]._id) > -1 && resource.sub_service_ids.indexOf(display_services[i]._id) > -1) {
+              ret.push(resource);
+              break;
         }
       }
     });
+    return ret;
   }
 });
 

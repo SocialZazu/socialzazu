@@ -10,7 +10,7 @@
     </div>
     <div class="span4">
       {{#with resource_datums}}
-      {{> home_search_resources search_placeholder}}
+      {{> home_search_resources}}
       {{/with}}
     </div>
   </div>
@@ -22,7 +22,7 @@
       {{> map_home}}
     </div>
     <div class="span4" style="overflow-y: scroll;" id="display_home">
-      {{> display_home}}
+      {{> show_map_resources}}
     </div>
   </div>
 </template>
@@ -71,41 +71,6 @@
 
 <template name="home_search_resources">
   {{> search_resources}}
-</template>
-
-<template name="display_home">
-  {{#if resource}}
-    {{#with resource}}
-    <div class="row-fluid">
-      <div class="span11">
-        <a href="{{urlFor 'resource'}}"><h4>{{name}}</h4></a>
-      </div>
-    </div>
-    <div class="row-fluid">
-      |{{#each services}}
-        <a href="{{urlFor 'service'}}"><small class="muted">{{name}} |</small></a>
-      {{/each}}
-    </div>
-    <hr>
-    <div class="row-fluid">
-      {{shortDescription}}
-    </div>
-    <hr>
-    <div class="row-fluid">
-      {{> resource_contact}}
-    </div>
-    <hr>
-    <div class="row-fluid">
-      {{#with hours}}
-      {{> resource_hours}}
-      {{/with}}
-    </div>
-    {{/with}}
-  {{else}}
-    <div class="row-fluid">
-      {{> show_map_resources}}
-    </div>
-  {{/if}}
 </template>
 
 <template name="show_map_resources">

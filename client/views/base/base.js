@@ -6,11 +6,8 @@ Deps.autorun(function() {
     }
   });
   if (Roles.userIsInRole(Meteor.userId(), ['editor', 'admin'])) {
-    console.log('subscribing to open flags with county: ' + Session.get('county'));
     Meteor.subscribe('open_flags', Session.get('county'))
   }
-  console.log('subscribing to resources_from_county');
-  Meteor.subscribe('resources_from_county', Session.get('county'))
 });
 
 Template.base.helpers({
@@ -47,6 +44,7 @@ Template.select_county.events({
     var val = $(e.target).val();
     if (!(val == "current")) {
       var county = Counties.findOne({_id:val});
+      Session.set('resource_id', null);
       Session.set('county', county);
       if (Session.get('map')) {
         var coords = county.spatial_location;
