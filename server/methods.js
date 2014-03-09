@@ -6,6 +6,7 @@ Meteor.methods({
   add_service_to_resource: function(resource_id, service_id) {
     //assuming service_id is a sub for now...
     Resources.update({_id:resource_id}, {$addToSet:{sub_service_ids:service_id}});
+    Services.update({_id:service_id}, {$push:{resources:resource_id}});
   },
 
   flag_resource: function(resource_id, user_id) {
@@ -35,5 +36,6 @@ Meteor.methods({
 
   remove_service_from_resource: function(resource_id, service_id) {
     Resources.update({_id:resource_id}, {$pull:{sub_service_ids:service_id}})
+    Services.update({_id:service_id}, {$pull:{resources:resource_id}});
   }
 });
