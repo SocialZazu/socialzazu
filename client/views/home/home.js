@@ -128,6 +128,11 @@ Template.map_home.rendered = function() {
       });
     }
     google.maps.event.addListener(map.gmap, 'bounds_changed', function() {
+      var markers_in_bounds = map.markers_in_bounds();
+      var display_resource = Session.get('display_resource');
+      if (display_resource && markers_in_bounds.indexOf(display_resource._id) == -1) {
+        Session.set('display_resource', null);
+      }
       Session.set('map_markers_in_view', map.markers_in_bounds());
     });
   }
@@ -303,12 +308,11 @@ Template.show_map_resources.helpers({
     var display_resource = Session.get('display_resource');
     var display_services = Session.get('display_services');
     var visible_services = Session.get('visible_services');
-    console.log(display_resource);
     if (display_resource) {
       var resource_id = display_resource._id;
       ret.push(display_resource);
     } else {
-      var resource_id = "blank";
+      var resource_id = "blank_id";
     }
     Resources.find({_id:{$in:Session.get('map_markers_in_view'), $ne:resource_id}}).forEach(function(resource) {
       var services = resource.sub_service_ids;
