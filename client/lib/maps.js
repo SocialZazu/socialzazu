@@ -23,6 +23,7 @@ map = {
     google.maps.event.addListener(gMarker, 'click', function() {
       resource = Resources.findOne({_id:gMarker.id});
       Session.set('display_resource', resource);
+      pan_to(gMarker.position);
     });
     return gMarker;
   },
@@ -114,8 +115,7 @@ map = {
       this.geocoder = new google.maps.Geocoder();
     }
 
-    var addresses = resource.locations.address;
-    var adrs = addresses[i];
+    var adrs = resource.locations.address[i];
     var string_adrs = adrs.street + ', ' + adrs.city + ', ' + adrs.state;
     this.geocoder.geocode({'address':string_adrs}, function(results, status) {
       if (status == google.maps.GeocoderStatus.OK) {
@@ -152,12 +152,16 @@ map = {
 }
 
 geocode_check = function(resource) {
-  if (resource && resource.locations && resource.address) {
-    var addresses = resource.address;
+  if (resource && resource.locations && resource.locations.address) {
+    var addresses = resource.locations.address;
     for (var i = 0; i < addresses.length; i++) {
-      if (addresses[i].spatial_location.lat) {
+      if (!addresses[i].coordinates.lat) {
         map.assign_geocode(resource, i);
       }
     }
   }
+}
+
+pan_to = function(position) {
+  map.panTo(position);
 }
