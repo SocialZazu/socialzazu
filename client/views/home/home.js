@@ -2,7 +2,7 @@ PAN_TO_ME = false;
 Session.set('user_flags', []);
 
 Deps.autorun(function() {
-  if (Session.get('display_services') && Session.get('display_services').length > 0) {
+  if (Session.get('display_services') && Session.get('display_services').length == SIDEBAR_NUM) {
     Meteor.subscribe(
       'resources_from_services',
       Session.get('display_services'),
@@ -21,7 +21,6 @@ Deps.autorun(function() {
 Template.flag_control.events({
   'click .flag': function(e, tmpl) {
     flag = $(tmpl.find('i'));
-    console.log(flag);
     if (!flag.hasClass('fa-flag')) {
       if (Meteor.userId()) {
         Meteor.call("flag_resource", this._id, Meteor.userId());
@@ -79,7 +78,7 @@ var colors = ["#74F0F2", "#B3F2C2", "#DCFA9B", "#FABDFC", "#F5A2AD",
               "#BDC9FC", "#A2B2F5", "#F5E1A2", "#AEF5A2", "#42F55D"];
 Template.home.rendered = function() {
   var i = -1;
-  if (!Session.get('display_services') || Session.get('display_services').length == 0) {
+  if (!Session.get('display_services') || Session.get('display_services').length < SIDEBAR_NUM) {
     Session.set(
       'display_services',
       this.data.services.map(
@@ -258,7 +257,6 @@ Template.resource_hours.helpers({
     return ret;
   },
   has_hours: function() {
-    console.log(this);
     return Object.keys(this).length > 0;
   },
   closed: function() {
@@ -298,7 +296,6 @@ Template.search_services.rendered = function() {
         break;
       }
     }
-    console.log('has_service: ' + has_service);
     if (!has_service) {
       var element = display_services.pop();
       map.remove_service(element._id);
