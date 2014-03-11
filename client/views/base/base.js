@@ -2,7 +2,7 @@ Deps.autorun(function() {
   Meteor.subscribe('counties', function() {
     if (!Session.get('county')) {
       //change later to pan to the county where the person is
-      Session.set('county', Counties.findOne({name:"Alameda"}));
+      Session.set('county', Counties.findOne({name:"San Francisco"}));
     }
   });
   if (Roles.userIsInRole(Meteor.userId(), ['editor', 'admin'])) {
@@ -47,7 +47,7 @@ Template.select_county.events({
       Session.set('resource_id', null);
       Session.set('county', county);
       if (Session.get('map')) {
-        var coords = county.spatial_location;
+        var coords = county.coordinates;
         var location = new google.maps.LatLng(coords.lat, coords.lng);
         map.panTo(location);
       }
