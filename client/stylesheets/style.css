@@ -68,6 +68,10 @@
   color: #EB1E2C;
 }
 
+.green, .green a {
+  color: #00FF33;
+}
+
 input {
   height: 34px;
 }
@@ -78,4 +82,9 @@ input {
 
 .left {
   float:left;
+}
+
+.field_name {
+  position:relative;
+  top:10px;
 }
