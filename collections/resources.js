@@ -19,7 +19,7 @@
 //             state:String,
 //             zip:String,
 //             type:String (physical / mailing),
-//             spatial_location: {
+//             coordinates: {
 //               lat:String,
 //               lng:String
 //             }
@@ -74,7 +74,7 @@ make_contact = function(name, title) {
 
 make_address = function(street, city, state, zipcode, type, lat, lng) {
   return {street:street, city:city, state:state, zipcode:zipcode,
-          type:type, spatial_location:{lat:lat, lng:lng}};
+          type:type, coordinates:{lat:lat, lng:lng}};
 }
 
 make_phone = function(number, hours, type) {
