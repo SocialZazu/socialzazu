@@ -1,14 +1,44 @@
 PAN_TO_ME = false;
+Session.set('user_flags', []);
+
+Deps.autorun(function() {
+  if (Session.get('display_services') && Session.get('display_services').length > 0) {
+    Meteor.subscribe(
+      'resources_from_services',
+      Session.get('display_services'),
+      Session.get('county'),
+      function() {
+        var service_ids = Session.get('display_services').map(
+          function(service) {return service._id}
+        );
+        Resources.find({sub_service_ids:{$in:service_ids}}).forEach(
+          function(resource) {add_marker(resource)}
+        )}
+    )
+  }
+});
 
 Template.flag_control.events({
   'click .flag': function(e, tmpl) {
-    flag = $(tmpl.find('.icon-flag'));
-    if (!flag.hasClass('red')) {
-      Meteor.call("flag_resource", flag.parent().attr('id'), Meteor.userId());
-      if (!Meteor.userId()) {
-        //TODO: doesn't do red if using icon-flag
-        flag.addClass('red');
+    flag = $(tmpl.find('i'));
+    console.log(flag);
+    if (!flag.hasClass('fa-flag')) {
+      if (Meteor.userId()) {
+        Meteor.call("flag_resource", this._id, Meteor.userId());
+      } else {
+        session_var_push('user_flags', this._id);
       }
+    }
+  }
+});
+
+Template.flag_control.helpers({
+  flag_on: function() {
+    var flag = Flags.findOne({open:true, user_id:Meteor.userId(), resource_id:this._id});
+    if (flag || Session.get('user_flags').indexOf(this._id) > -1) {
+      return "fa fa-flag red"
+    } else {
+      return "fa fa-flag-o red"
     }
   }
 });
@@ -44,6 +74,7 @@ Template.home.helpers({
   },
 });
 
+
 var colors = ["#74F0F2", "#B3F2C2", "#DCFA9B", "#FABDFC", "#F5A2AD",
               "#BDC9FC", "#A2B2F5", "#F5E1A2", "#AEF5A2", "#42F55D"];
 Template.home.rendered = function() {
@@ -68,23 +99,6 @@ Template.home.rendered = function() {
       )
     );
   }
-  Deps.autorun(function() {
-    Meteor.subscribe(
-      'resources_from_services',
-      Session.get('display_services'),
-      Session.get('county'),
-      function() {
-        var service_ids = Session.get('display_services').map(
-          function(service) {return service._id}
-        );
-        Resources.find({
-          sub_service_ids:{
-            $in:service_ids
-          }}).forEach(function(resource) {
-            add_marker(resource);
-          });
-      });
-  });
   $('#search_services_form').outerWidth($('#services_home').width());
 }
 
@@ -97,7 +111,8 @@ Template.home_search_resources.rendered = function() {
   });
   datums.initialize();
 
-  $('#search_resources_form').outerWidth($('#titleBox').width());
+  $('#search_resources_field').outerWidth($('#display_home').width() - 54)
+//   $('#search_resources_form').outerWidth($('#titleBox').width());
   $('#search_resources_field').typeahead(null, {
     displayKey: 'value',
     source: datums.ttAdapter()
@@ -106,7 +121,7 @@ Template.home_search_resources.rendered = function() {
     if (resource) {
       var address = resource.locations.address[0];
       if (address) {
-        var coords = address.spatial_location;
+        var coords = address.coordinates;
         map.panTo(new google.maps.LatLng(coords.lat, coords.lng));
       }
       Session.set('display_resource', resource)
@@ -136,28 +151,52 @@ Template.map_home.rendered = function() {
       Session.set('map_markers_in_view', map.markers_in_bounds());
     });
   }
-  $('#search_map_field').outerWidth($('#map_canvas').width())
+  $('#search_map_field').outerWidth($('#map_canvas').width() + 30)
 }
 
 Template.map_home.destroyed = function() {
   Session.set('map', false);
 };
 
-Template.resource_access.helpers({
+Template.resource_inputs.helpers({
+  capitalize: function(str) {
+    return capitalize(str);
+  },
   fields: function() {
     return Object.keys(this).sort();
+  },
+  has_fields: function() {
+    return Object.keys(this).length > 0;
   },
   values: function() {
     var dict = this;
     return Object.keys(this).sort().map(function(field) {
-      return dict[field]
+      if (field in dict) {
+        return dict[field];
+      } else {
+        return '';
+      }
     })
   }
 });
 
+Template.resource_list.helpers({
+  has_elems: function() {
+    return this.list.length > 0;
+  }
+});
+
 Template.resource_well.helpers({
-  sub_services: function() {
-    return Services.find({_id:{$in:this.sub_service_ids}}, {name:true});
+  accessibility: function() {
+    var access = this.locations.accessibility;
+    if (is_non_null(access)) {
+      return {
+        list: access,
+        field: 'Access'
+      }
+    } else {
+      return null;
+    }
   },
   address: function() {
     return this.locations.address;
@@ -172,40 +211,55 @@ Template.resource_well.helpers({
       email:loc.internet_resource.email
     }
   },
-  has_hours: function() {
-    return this.location.hours.length > 0;
-  },
   hours: function() {
-    return this.locations.hours;
+    return this.locations.hours
+  },
+  languages: function() {
+    var languages = this.locations.languages;
+    if (is_non_null(languages)) {
+      return {
+        list: languages,
+        field: 'Languages'
+      }
+    } else {
+      return null;
+    }
   },
   short_desc: function() {
     return this.locations.short_desc;
   },
-  has_access: function() {
-    var values = get_values_from_fields(this.locations, ['accessibility', 'audience', 'eligibility', 'fees', 'transportation', 'wait'])
-    return values.length > 0;
+  single_inputs: function() {
+    var ret = get_values_from_fields(this.locations.services, ['how_to_apply', 'audience', 'eligibility', 'fees']);
+    var transport = this.locations.transportation;
+    if (is_non_null(transport)) {
+      ret['transport'] = transport;
+    }
+    return ret;
   },
-  access: function() {
-    return get_values_from_fields(this.locations, ['accessibility', 'audience', 'eligibility', 'fees', 'transportation', 'wait'])
-  },
-  languages: function() {
-    return this.locations.languages;
-  },
-  how_to_apply: function() {
-    return this.locations.services.how_to_apply
+  sub_services: function() {
+    return Services.find({_id:{$in:this.sub_service_ids}}, {name:true});
   },
 });
 
 Template.resource_hours.helpers({
   day_of_week: function() {
-    var fields = ['m', 'tu', 'w', 'th', 'f', 'sa', 'su'];
+    var fields = ['m_f', 'sat', 'sun'];
     var ret = [];
     for (var i = 0; i < fields.length; i++) {
       if (fields[i] in this) {
-        ret.push(this[fields[i]]);
+        var day = this[fields[i]];
+        day['day'] = capitalize(fields[i]);
+        if (day['day'].indexOf('_') > -1) {
+          day['day'] = day['day'].split('_').join('-').toUpperCase();
+        }
+        ret.push(day);
       }
     }
     return ret;
+  },
+  has_hours: function() {
+    console.log(this);
+    return Object.keys(this).length > 0;
   },
   closed: function() {
     return this.closed || (!this.open_time && !this.close_time);
@@ -244,6 +298,7 @@ Template.search_services.rendered = function() {
         break;
       }
     }
+    console.log('has_service: ' + has_service);
     if (!has_service) {
       var element = display_services.pop();
       map.remove_service(element._id);
@@ -262,24 +317,15 @@ Template.search_services.rendered = function() {
 Template.service_box.events({
   'click .serviceBox': function(e, tmpl) {
     var box = $(e.target).closest('.serviceBox');
-    var color_index = colors.indexOf(box.attr('color'));
-    var service = Session.get('display_services')[color_index];
-    var visibles = Session.get('visible_services');
-    var index = visibles.indexOf(service._id);
+    var service_id = this._id;
     if (box.hasClass('selected')) {
-      if (index > -1) {
-        visibles.splice(index, 1);
-        Session.set('visible_services', visibles);
-      }
-      adjust_map_display(service, remove_marker);
+      session_var_splice('visible_services', service_id);
+      adjust_map_display(service_id, remove_marker);
       box.removeClass('selected');
       box.css('background-color', '#fff');
     } else {
-      if (index == -1) {
-        visibles.push(service);
-        Session.set('visible_services', visibles);
-      }
-      adjust_map_display(service, add_existing_marker);
+      session_var_push('visible_services', service_id);
+      adjust_map_display(service_id, add_existing_marker);
       box.addClass('selected');
       box.css('background-color', box.attr('color'));
     }
@@ -294,7 +340,7 @@ Template.services_sidebar.helpers({
 
 Template.services_sidebar.rendered = function() {
   add_all_selected();
-  $('#map_canvas').css("height", $('#services_home').height());
+  $('#map_canvas').css("height", $('#services_home').height() - 30);
   $('#display_home').css("height", $('#services_home').height());
   $('.search-query.tt-hint').width('inherit');
 }
@@ -348,15 +394,15 @@ var add_marker = function(resource) {
   var addresses = resource.locations.address;
   for (var i = 0; i < addresses.length; i++) {
     var adrs = addresses[i];
-    if (typeof adrs.spatial_location.lat !== 'undefined' &&
-        typeof adrs.spatial_location.lng !== 'undefined') {
+    if (typeof adrs.coordinates.lat !== 'undefined' &&
+        typeof adrs.coordinates.lng !== 'undefined') {
       var exists = map.marker_exists(resource._id, i);
       if (!exists[0]) {
         var icon = get_icon_for_resource(resource);
         map.add_new_marker({
           id:resource._id, position:i, title:resource.name,
-          lat:adrs.spatial_location.lat,
-          lng:adrs.spatial_location.lng,
+          lat:adrs.coordinates.lat,
+          lng:adrs.coordinates.lng,
           services:resource.sub_service_ids,
           icon:icon});
       }
@@ -375,8 +421,8 @@ var add_existing_marker = function(resource) {
   map.add_existing_marker(resource);
 };
 
-var adjust_map_display = function(service, f) {
-  Resources.find({sub_service_ids:service._id}).forEach(function(resource) {
+var adjust_map_display = function(service_id, f) {
+  Resources.find({sub_service_ids:service_id}).forEach(function(resource) {
     f(resource);
   });
 };
@@ -436,9 +482,13 @@ var get_values_from_fields = function(loc, fields) {
   var ret = {};
   fields.forEach(function(field) {
     var value = loc[field];
-    if (value && value.length > 0) {
+    if (is_non_null(value)) {
       ret[field] = value
     }
   });
   return ret
+}
+
+var is_non_null = function(value) {
+  return value && value.length > 0;
 }
