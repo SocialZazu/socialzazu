@@ -2,9 +2,11 @@ Meteor.publish('counties', function() {
   return Counties.find();
 });
 
-Meteor.publish('flags_from_user', function(user_id) {
+Meteor.publish('flags_from_user', function(user_id, county) {
   if (!user_id) {
     return null;
+  } else if (county) {
+    return Flags.find({open:true, user_id:user_id, counties:county});
   } else {
     return Flags.find({open:true, user_id:user_id});
   }
@@ -18,22 +20,18 @@ Meteor.publish('open_flags', function(county) {
   if (!county) {
     return [];
   }
-  return Flags.find({open:true, service_areas:county._id})
+  return Flags.find({open:true, counties:county._id})
 });
 
-Meteor.publish('resources', function() {
-    return Resources.find({})
+Meteor.publish('resources_from_id', function(id) {
+    return Resources.find({_id:id});
 });
 
-Meteor.publish('resources_from_ids', function(ids) {
-    return Resources.find({_id:{$in:ids}});
-});
-
-Meteor.publish('resources_from_county', function(county) {
+Meteor.publish('search_resources_from_county', function(county) {
   if (!county) {
     return [];
   }
-  return Resources.find({service_areas:county._id}, {limit:30});
+  return Resources.find({service_areas:county._id}, {_id:true, name:true, name_route:true});
 });
 
 Meteor.publish('resources_from_services', function(services, county) {
