@@ -117,3 +117,16 @@ make_resource = function(name, timestamp, location, service_areas, sub_services)
     return resource_id;
   }
 }
+
+if (Meteor.server) {
+  set_update_resource_obj = function(id, obj) {
+    Resources.update({_id:id}, {$set:obj});
+  }
+
+  set_update_resource_with_str = function(id, update_str, value) {
+    var update_query = {};
+    update_query[update_str] = value;
+    set_update_resource_obj(id, update_query);
+  }
+
+}
