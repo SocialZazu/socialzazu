@@ -12,7 +12,9 @@ Deps.autorun(function() {
           function(service) {return service._id}
         );
         Resources.find({sub_service_ids:{$in:service_ids}}).forEach(
-          function(resource) {add_marker(resource)}
+          function(resource) {
+            add_marker(resource)
+          }
         )
       }
     )
@@ -112,7 +114,6 @@ Template.home_search_resources.rendered = function() {
   datums.initialize();
 
   $('#search_resources_field').outerWidth($('#display_home').width() - 54)
-//   $('#search_resources_form').outerWidth($('#titleBox').width());
   $('#search_resources_field').typeahead(null, {
     displayKey: 'value',
     source: datums.ttAdapter()
@@ -141,7 +142,11 @@ Template.map_home.rendered = function() {
           map.panTo(center);
         }
       });
+    } else if (Session.get('county') && Session.get('map')) {
+      var coords = Session.get('county').coordinates;
+      pan_to(new google.maps.LatLng(coords.lat, coords.lng));
     }
+
     google.maps.event.addListener(map.gmap, 'bounds_changed', function() {
       var markers_in_bounds = map.markers_in_bounds();
       var display_resource = Session.get('display_resource');
@@ -230,6 +235,10 @@ Template.resource_well.helpers({
   },
   single_inputs: function() {
     var ret = get_values_from_fields(this.locations.services, ['how_to_apply', 'audience', 'eligibility', 'fees']);
+    if ('how_to_apply' in ret) {
+      ret['apply'] = ret['how_to_apply'];
+      delete ret['how_to_apply'];
+    }
     var transport = this.locations.transportation;
     if (is_non_null(transport)) {
       ret['transport'] = transport;
@@ -299,15 +308,16 @@ Template.search_services.rendered = function() {
     }
     if (!has_service) {
       var element = display_services.pop();
+      session_var_splice('visible_services', element._id);
       map.remove_service(element._id);
       var color = element.color;
-      Services.find({name_route:name_route}).forEach(function(service) {
-        display_services.unshift(
-          {name:service.name, name_route:service.name_route,
-           _id:service._id, color:color}
-        );
-        Session.set('display_services', display_services);
-      });
+      var service = Services.findOne({name_route:name_route});
+      display_services.unshift(
+        {name:service.name, name_route:service.name_route,
+         _id:service._id, color:color}
+      );
+      Session.set('display_services', display_services);
+      session_var_push('visible_services', service._id);
     }
   });
 }
