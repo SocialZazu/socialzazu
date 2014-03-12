@@ -160,3 +160,9 @@ geocode_check = function(resource) {
 pan_to = function(position) {
   map.panTo(position);
 }
+
+trigger_map_resize = function() {
+  var center = map.gmap.getCenter();
+  google.maps.event.trigger(map.gmap, "resize");
+  map.gmap.setCenter(center);
+}

@@ -83,7 +83,7 @@ var colors = ["#74F0F2", "#B3F2C2", "#DCFA9B", "#FABDFC", "#F5A2AD",
               "#BDC9FC", "#A2B2F5", "#F5E1A2", "#AEF5A2", "#42F55D"];
 Template.home.rendered = function() {
   var i = -1;
-  if (this.data.services.length == SIDEBAR_NUM) {
+  if (!Session.get('display_services') || Session.get('display_services').length < SIDEBAR_NUM) {
     Session.set(
       'display_services',
       this.data.services.map(
@@ -136,6 +136,7 @@ Template.map_home.rendered = function() {
   if (!this.rendered) {
     map.initialize_map();
     this.rendered = Session.get('map');
+
     if (PAN_TO_ME && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(function(position) {
         var center = new google.maps.LatLng(position.coords.latitude,
@@ -159,6 +160,7 @@ Template.map_home.rendered = function() {
     });
   }
   $('#search_map_field').outerWidth($('#map_canvas').width() + 30)
+  trigger_map_resize();
 }
 
 Template.map_home.destroyed = function() {
