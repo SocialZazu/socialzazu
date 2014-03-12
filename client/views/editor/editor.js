@@ -8,7 +8,6 @@ Template.editor.created = function() {
   Session.set('is_editing', false);
   Session.set('category_id', null);
   Session.set('resource_id', null);
-  Session.set('has_county_select', true);
 }
 
 Template.editor.destroyed = function() {
@@ -19,7 +18,6 @@ Template.editor.destroyed = function() {
   Session.set('is_editing', null);
   Session.set('category_id', null);
   Session.set('resource_id', null);
-  Session.set('has_county_select', false);
 }
 
 Template.editor.events({

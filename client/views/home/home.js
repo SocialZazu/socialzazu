@@ -51,13 +51,11 @@ Template.home.created = function() {
   Session.set('display_resource', null);
   Session.set('display_services', []); //all in sidebar
   Session.set('visible_services', []); //the ones shown on map
-  Session.set('has_county_select', true);
 }
 
 Template.home.destroyed = function() {
   Session.set('map_markers_in_view', []);
   Session.set('resources_from_services', []);
-  Session.set('has_county_select', false);
 }
 
 Template.home.helpers({

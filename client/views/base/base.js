@@ -13,9 +13,6 @@ Template.base.helpers({
   has_editor_permission: function() {
     return Roles.userIsInRole(Meteor.userId(), ['editor', 'admin']);
   },
-  has_county_select: function() {
-    return Session.get('has_county_select');
-  }
 });
 
 Template.base.created = function() {
