@@ -24,7 +24,7 @@ Meteor.publish('open_flags', function(county) {
 });
 
 Meteor.publish('resources_from_id', function(id) {
-    return Resources.find({_id:id});
+  return Resources.find({_id:id});
 });
 
 Meteor.publish('search_resources_from_county', function(county) {
@@ -41,7 +41,7 @@ Meteor.publish('resources_from_services', function(services, county) {
   service_ids = services.map(function(service) {
     return service._id;
   });
-  return Resources.find({sub_service_ids:{$in:service_ids}, service_areas:county._id}, {limit:30});
+  return Resources.find({sub_service_ids:{$in:service_ids}, service_areas:county._id});
 });
 
 Meteor.publish('service_name_route', function(name_route) {
