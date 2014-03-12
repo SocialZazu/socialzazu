@@ -70,8 +70,12 @@ Template.home.helpers({
     }
   },
   service_datums: function() {
-    return Services.find().map(function(service) {
-      return {value:service.name, name_route:service.name_route}
+    return Services.find({parents:{$exists:true, $ne:null}}).map(function(service) {
+      var search = service.name;
+      Services.find({_id:{$in:service.parents}}).forEach(function(parent) {
+        search += ' ' + parent.name;
+      });
+      return {value:service.name, name_route:service.name_route, search:search}
     });
   },
 });
@@ -287,7 +291,7 @@ Template.search_map.rendered = function() {
 Template.search_services.rendered = function() {
   var data = this.data;
   var services_datums = new Bloodhound({
-    datumTokenizer: function(d) { return Bloodhound.tokenizers.whitespace(d.value); },
+    datumTokenizer: function(d) { return Bloodhound.tokenizers.whitespace(d.search); },
     queryTokenizer: Bloodhound.tokenizers.whitespace,
     local: data
   });

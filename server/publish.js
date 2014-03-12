@@ -48,6 +48,10 @@ Meteor.publish('service_name_route', function(name_route) {
   return Services.find({name_route:name_route});
 });
 
+Meteor.publish('services', function() {
+  return Services.find();
+});
+
 Meteor.publish('sub_services', function() {
   return Services.find({parents:{$exists:true, $ne:null}});
 });
