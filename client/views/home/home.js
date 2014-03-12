@@ -1,4 +1,3 @@
-PAN_TO_ME = false;
 Session.set('user_flags', []);
 
 Deps.autorun(function() {
@@ -125,7 +124,7 @@ Template.home_search_resources.rendered = function() {
       var address = resource.locations.address[0];
       if (address) {
         var coords = address.coordinates;
-        map.panTo(new google.maps.LatLng(coords.lat, coords.lng));
+        pan_to(new google.maps.LatLng(coords.lat, coords.lng));
       }
       Session.set('display_resource', resource)
     }
@@ -137,15 +136,7 @@ Template.map_home.rendered = function() {
     map.initialize_map();
     this.rendered = Session.get('map');
 
-    if (PAN_TO_ME && navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(function(position) {
-        var center = new google.maps.LatLng(position.coords.latitude,
-                                            position.coords.longitude);
-        if(center) {
-          map.panTo(center);
-        }
-      });
-    } else if (Session.get('county') && Session.get('map')) {
+    if (Session.get('county') && Session.get('map')) {
       var coords = Session.get('county').coordinates;
       pan_to(new google.maps.LatLng(coords.lat, coords.lng));
     }
@@ -159,7 +150,8 @@ Template.map_home.rendered = function() {
       Session.set('map_markers_in_view', map.markers_in_bounds());
     });
   }
-  $('#search_map_field').outerWidth($('#map_canvas').width() + 30)
+  $('#search_map_field').outerWidth(
+    $('#map_canvas').width() + 30 - $('#find_me').outerWidth())
   trigger_map_resize();
 }
 
@@ -391,7 +383,7 @@ var initialize_map_search = function() {
   google.maps.event.addListener(autocomplete, 'place_changed', function() {
     var place = autocomplete.getPlace();
     if (place.geometry) {
-      map.panTo(place.geometry.location);
+      pan_to(place.geometry.location);
     } else {
       input.placeholder = 'Change Location';
     }
