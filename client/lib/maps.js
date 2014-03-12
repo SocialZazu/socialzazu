@@ -6,6 +6,13 @@ map = {
   markerIDs: [],
   marker_services: [],
 
+  add_map_marker_in_view: function(marker) {
+    var bounds = this.gmap.getBounds();
+    if (bounds && bounds.contains(marker.position)) {
+      session_var_push('map_markers_in_view', marker.id);
+    }
+  },
+
   add_new_marker: function(marker) {
     var gLatLng = new google.maps.LatLng(marker.lat, marker.lng);
     var gMarker = new google.maps.Marker({
@@ -20,6 +27,7 @@ map = {
     this.markers.push(gMarker);
     this.markerIDs.push(marker.id + '_' + marker.position.toString());
     this.marker_services.push(marker.services);
+    this.add_map_marker_in_view(gMarker);
     google.maps.event.addListener(gMarker, 'click', function() {
       resource = Resources.findOne({_id:gMarker.id});
       Session.set('display_resource', resource);
@@ -33,11 +41,7 @@ map = {
     var exists = this.marker_exists(resource._id, i);
     while(exists[0]) {
       this.markers[exists[1]].setMap(this.gmap);
-      var bounds = this.gmap.getBounds();
-      if (bounds && bounds.contains(this.markers[exists[1]].position)) {
-        session_var_push('map_markers_in_view', this.markers[exists[1]].id);
-      }
-
+      this.add_map_marker_in_view(this.markers[exists[1]]);
       i += 1;
       exists = this.marker_exists(resource._id, i);
     }
@@ -48,14 +52,7 @@ map = {
     var exists = this.marker_exists(resource._id, i);
     while(exists[0]) {
       this.markers[exists[1]].setMap(null);
-
-      var map_markers_in_view = Session.get('map_markers_in_view');
-      var index = map_markers_in_view.indexOf(resource._id);
-      if (index > -1) {
-        map_markers_in_view.splice(index, 1);
-        Session.set('map_markers_in_view', map_markers_in_view);
-      }
-
+      session_var_splice('map_markers_in_view', resource._id);
       i += 1;
       exists = this.marker_exists(resource._id, i);
     }
