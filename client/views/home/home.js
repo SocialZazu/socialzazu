@@ -83,7 +83,7 @@ var colors = ["#74F0F2", "#B3F2C2", "#DCFA9B", "#FABDFC", "#F5A2AD",
               "#BDC9FC", "#A2B2F5", "#F5E1A2", "#AEF5A2", "#42F55D"];
 Template.home.rendered = function() {
   var i = -1;
-  if (!Session.get('display_services') || Session.get('display_services').length < SIDEBAR_NUM) {
+  if (this.data.services.length == SIDEBAR_NUM) {
     Session.set(
       'display_services',
       this.data.services.map(
@@ -102,8 +102,8 @@ Template.home.rendered = function() {
         }
       )
     );
+    $('#search_services_form').outerWidth($('#services_home').width());
   }
-  $('#search_services_form').outerWidth($('#services_home').width());
 }
 
 Template.home_search_resources.rendered = function() {
