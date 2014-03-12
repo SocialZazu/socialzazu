@@ -15,43 +15,9 @@ var make_inputs = function() {
   var misc_id = Inputs.insert({type:["resource"], dom:"input", name:"Miscellaneous Information"});
 }
 
-make_users = function() {
-  if (Meteor.users.findOne({username:'Admin'})) {
-    return;
-  }
-  var admin_id = Accounts.createUser({
-    email:'cinjon.resnick@gmail.com',
-    password:'temppass',
-    username:'Admin'
-  });
-
-  var highland_id = Accounts.createUser({
-    email:'dhsieh@gmail.com',
-    password:'temppass',
-    username:'Highland'
-  });
-
-  var user_id = Accounts.createUser({
-    email:'user@email.com',
-    password:'temppass',
-  });
-
-  var mari_id = Accounts.createUser({
-    email:'mcastaldi@ebclc.org',
-    password:'temppass',
-    username: 'EBCLC'
-  });
-
-  Roles.addUsersToRoles(admin_id, ['admin', 'editor']);
-  Roles.addUsersToRoles(highland_id, ['editor']);
-  Roles.addUsersToRoles(mari_id, ['editor']);
-}
-
 //bootstrap an empty db
 Meteor.startup(function() {
   if (Services.find().count() === 0) {
-    make_users();
-
     var timestamp = (new Date()).getTime();
 
     //make parents
@@ -159,11 +125,11 @@ Meteor.startup(function() {
 
 
     var sf_id = Counties.insert(
-      {name:'San Francisco', spatial_location: {lat:37.78551, lng:-122.441978}});
+      {name:'San Francisco', coordinates: {lat:37.78551, lng:-122.441978}});
     var alameda_id = Counties.insert(
-      {name:'Alameda', spatial_location:{lat:37.85142099999999, lng:-122.25718}});
+      {name:'Alameda', coordinates:{lat:37.85142099999999, lng:-122.25718}});
     var marin_id = Counties.insert(
-      {name:'Marin', spatial_location:{lat:38.0681137, lng:-122.7332743}});
+      {name:'Marin', coordinates:{lat:38.0681137, lng:-122.7332743}});
 
     var _name = 'Epiphany House'
     var epiphany_id = make_resource(
@@ -225,7 +191,7 @@ Meteor.startup(function() {
              state:"CA",
              zipcode:"94110",
              type:"physical",
-             spatial_location: {
+             coordinates: {
                lat:37.762197,
                lng:-122.40756199999998
              },
@@ -277,7 +243,7 @@ Meteor.startup(function() {
              state:"CA",
              zipcode:"94107",
              type:"physical",
-             spatial_location: {
+             coordinates: {
                lat:37.7544611,
                lng:-122.39367900000002
              },
@@ -288,7 +254,7 @@ Meteor.startup(function() {
              state:"CA",
              zipcode:"94949",
              type:"physical",
-             spatial_location: {
+             coordinates: {
                lat:38.0719482,
                lng:-122.5305377
              }
@@ -337,7 +303,7 @@ Meteor.startup(function() {
              state:"CA",
              zipcode:"94618",
              type:"physical",
-             spatial_location: {
+             coordinates: {
                lat:37.85142099999999,
                lng:-122.25718
              },
