@@ -405,6 +405,7 @@ var add_marker = function(resource) {
           icon:icon});
       } else {
         add_existing_marker(resource);
+        break;
       }
     }
   }
