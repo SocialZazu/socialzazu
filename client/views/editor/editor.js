@@ -69,10 +69,6 @@ Template.editor.helpers({
 
 Deps.autorun(function() {
   Meteor.subscribe(
-    'search_resources_from_county',
-    Session.get('county')
-  );
-  Meteor.subscribe(
     'resources_from_id',
     Session.get('resource_id')
   );
