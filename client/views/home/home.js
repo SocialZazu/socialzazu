@@ -13,7 +13,8 @@ Deps.autorun(function() {
         );
         Resources.find({sub_service_ids:{$in:service_ids}}).forEach(
           function(resource) {add_marker(resource)}
-        )}
+        )
+      }
     )
   }
 });
@@ -391,7 +392,7 @@ var add_marker = function(resource) {
   var addresses = resource.locations.address;
   for (var i = 0; i < addresses.length; i++) {
     var adrs = addresses[i];
-    if (typeof adrs.coordinates.lat !== 'undefined' &&
+    if (adrs.coordinates && typeof adrs.coordinates.lat !== 'undefined' &&
         typeof adrs.coordinates.lng !== 'undefined') {
       var exists = map.marker_exists(resource._id, i);
       if (!exists[0]) {
@@ -402,6 +403,8 @@ var add_marker = function(resource) {
           lng:adrs.coordinates.lng,
           services:resource.sub_service_ids,
           icon:icon});
+      } else {
+        add_existing_marker(resource);
       }
     }
   }

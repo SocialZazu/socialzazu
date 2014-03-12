@@ -35,9 +35,7 @@ map = {
       this.markers[exists[1]].setMap(this.gmap);
       var bounds = this.gmap.getBounds();
       if (bounds && bounds.contains(this.markers[exists[1]].position)) {
-        var map_markers_in_view = Session.get('map_markers_in_view');
-        map_markers_in_view.push(this.markers[exists[1]].id);
-        Session.set('map_markers_in_view', map_markers_in_view);
+        session_var_push('map_markers_in_view', this.markers[exists[1]].id);
       }
 
       i += 1;
