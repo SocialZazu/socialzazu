@@ -17,10 +17,9 @@ var make_inputs = function() {
 
 //bootstrap an empty db
 Meteor.startup(function() {
-  var admin_id = Resources.findOne({'emails.0.address':'admin@socialzazu.com'});
+  var admin_id = Meteor.users.findOne({'emails.0.address':'admin@socialzazu.com'});
   if (admin_id) {
     Roles.addUsersToRoles(admin_id, ['admin', 'editor']);
-    Resources.update({_id:admin_id}, {$set:{'profile.name':'Admin'}});
   }
 
   if (Services.find().count() === 0) {
