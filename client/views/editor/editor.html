@@ -256,14 +256,14 @@
           {{> edit_field name}}
           {{> edit_field url}}
           {{> edit_field email}}
-          {{#each contacts}} <!--TODO allow for removing contacts-->
+          {{#each contacts}} <!--TODO allow for removing contacts -->
           {{> edit_field contact_name}}
           {{> edit_field contact_title}}
           {{/each}}
-          {{#each phones}}
+          {{#each phones}} <!--TODO allow for removing phone -->
           {{> edit_phone}}
           {{/each}}
-          {{#each addresses}}
+          {{#each addresses}} <!--TODO allow for removing address -->
           {{> edit_address}}
           {{/each}}
           {{> edit_sub_services sub_services}}
