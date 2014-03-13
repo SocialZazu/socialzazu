@@ -28,6 +28,15 @@
           </ul>
         </div>
         {{/if}}
+        {{#if has_admin_permissions}}
+        <div class="right">
+          <ul class="nav">
+            <li>
+              <a class="profileLink" href="{{pathFor 'admin'}}">Admin</a>
+            </li>
+          </ul>
+        </div>
+        {{/if}}
       </div>
     </div>
     <div class="row-fluid" style="height:100%">

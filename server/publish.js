@@ -1,3 +1,7 @@
+Meteor.publish('all_users', function() {
+  return Meteor.users.find({}, {_id:true, emails:true});
+});
+
 Meteor.publish('counties', function() {
   return Counties.find();
 });

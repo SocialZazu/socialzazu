@@ -10,6 +10,9 @@ Deps.autorun(function() {
 });
 
 Template.base.helpers({
+  has_admin_permissions: function() {
+    return Roles.userIsInRole(Meteor.userId(), ['admin']);
+  },
   has_editor_permission: function() {
     return Roles.userIsInRole(Meteor.userId(), ['editor', 'admin']);
   },

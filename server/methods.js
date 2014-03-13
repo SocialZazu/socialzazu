@@ -23,6 +23,14 @@ Meteor.methods({
     flag_id = Flags.insert({created_time:timestamp, resource_id:resource_id, user_id:user_id, open:true, closed_time:null, counties:counties});
   },
 
+  make_editor: function(user_id, username) {
+    var timestamp = (new Date()).getTime();
+    Roles.addUsersToRoles(user_id, ['editor']);
+    var update_query = {};
+    update_query['profiles.name'] = username;
+    Meteor.users.update({_id:user_id}, {$set:update_query});
+  },
+
   mark_complete: function(resource_id, user_id) {
     var timestamp = (new Date()).getTime();
     Resources.update({_id:resource_id}, {$set:{needs_edit:false}})
