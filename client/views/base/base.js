@@ -1,7 +1,7 @@
 Deps.autorun(function() {
   Meteor.subscribe('counties', function() {
     if (!Session.get('county')) {
-      Session.set('county', Counties.findOne({name:"San Francisco"}));
+      Session.set('county', Counties.findOne({name:"Alameda"}));
     }
   });
   if (Roles.userIsInRole(Meteor.userId(), ['editor', 'admin'])) {
