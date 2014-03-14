@@ -228,7 +228,7 @@ Template.resource_well.helpers({
     }
   },
   short_desc: function() {
-    return this.locations.short_desc;
+    return this.locations.short_desc || 'No Short Description given';
   },
   single_inputs: function() {
     var ret = get_values_from_fields(this.locations.services, ['how_to_apply', 'audience', 'eligibility', 'fees']);
@@ -243,7 +243,19 @@ Template.resource_well.helpers({
     return ret;
   },
   sub_services: function() {
-    return Services.find({_id:{$in:this.sub_service_ids}}, {name:true});
+    var i = 0;
+    var num_services = 0;
+    if (this.sub_service_ids) {
+      num_services = this.sub_service_ids.length;
+    }
+    return Services.find({_id:{$in:this.sub_service_ids}}, {name:true}).map(function(service) { //hack to get the sub_services |'s to work right
+      i += 1;
+      if (i == num_services) {
+        return {last:true, name:service.name}
+      } else {
+        return {last:false, name:service.name}
+      }
+    });
   },
 });
 

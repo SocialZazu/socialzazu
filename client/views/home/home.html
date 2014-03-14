@@ -180,8 +180,11 @@
         </div>
         <div class="row-fluid">
           <small class="muted">
-            |{{#each sub_services}}
-            <a href="#">{{name}} </a>|
+            {{#each sub_services}}
+            <a href="#">{{name}} </a>
+            {{#unless last}}
+            |
+            {{/unless}}
             {{/each}}
           </small>
         </div>
