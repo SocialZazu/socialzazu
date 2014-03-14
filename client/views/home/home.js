@@ -50,6 +50,7 @@ Template.home.created = function() {
   Session.set('display_resource', null);
   Session.set('display_services', []); //all in sidebar
   Session.set('visible_services', []); //the ones shown on map
+  Session.set('init_pan_to_county', null);
 }
 
 Template.home.destroyed = function() {
@@ -103,6 +104,11 @@ Template.home.rendered = function() {
     );
     $('#search_services_form').outerWidth($('#services_home').width());
   }
+    if (Session.get('county') && Session.get('map') && !Session.get('init_pan_to_county')) {
+      Session.set('init_pan_to_county', true);
+      var coords = Session.get('county').coordinates;
+      pan_to(new google.maps.LatLng(coords.lat, coords.lng));
+    }
 }
 
 Template.home_search_resources.rendered = function() {
@@ -135,11 +141,6 @@ Template.map_home.rendered = function() {
   if (!this.rendered) {
     map.initialize_map();
     this.rendered = Session.get('map');
-
-    if (Session.get('county') && Session.get('map')) {
-      var coords = Session.get('county').coordinates;
-      pan_to(new google.maps.LatLng(coords.lat, coords.lng));
-    }
 
     google.maps.event.addListener(map.gmap, 'bounds_changed', function() {
       var markers_in_bounds = map.markers_in_bounds();
