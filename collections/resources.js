@@ -108,6 +108,7 @@ make_resource = function(name, timestamp, location, service_areas, sub_services)
   if (resource) {
     return resource._id;
   } else {
+    name = name.trim()
     var resource_id = Resources.insert(
       {
         name:name, created_time:timestamp, name_route:make_name_route(name),
