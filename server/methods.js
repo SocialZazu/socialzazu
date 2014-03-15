@@ -137,10 +137,12 @@ Meteor.methods({
       });
 
       var new_contacts = {};
-      contact_fields.forEach(function(field) {
-        var key = field.slice(8);
-        new_contacts[key] = edits_or_current(edits[field], resource.locations.contacts[0], key);
-      });
+      if (resource.locations.contacts && resource.locations.contacts[0]) {
+        contact_fields.forEach(function(field) {
+          var key = field.slice(8);
+          new_contacts[key] = edits_or_current(edits[field], resource.locations.contacts[0], key);
+        });
+      }
 
       if ('contact_name' in edits) {
         var new_poc = [edits['contact_name']];
@@ -152,6 +154,7 @@ Meteor.methods({
       location_fields.forEach(function(field) {
         new_locations[field] = edits_or_current(edits[field], resource.locations, field);
       });
+
 
       special_fields.forEach(function(field) {
         if (field == 'phones') {
@@ -179,6 +182,10 @@ Meteor.methods({
       update_resource(resource.locations.contacts[0], new_contacts, user_id,
                       resource_id, timestamp, 'contacts', 'locations.contacts.0');
 
+      var new_names = {};
+      new_names['name'] = edits_or_current(edits['name'], resource.name, 'name')
+      new_names['name_route'] = make_name_route(new_names['name']);
+
 
       var update_obj = {}; //TODO: make everything one big change like this one
       for (field in new_locations) {
@@ -189,9 +196,17 @@ Meteor.methods({
           update_obj['locations.' + field] = value;
         }
       }
+      for (field in new_names) {
+        var value = new_names[field]
+        if (value !== resource[field]) {
+          resource_field_change(timestamp, resource_id, field, resource[field], value, user_id);
+          update_obj[field] = value;
+        }
+      }
       if (Object.keys(update_obj).length > 0) {
         set_update_resource_obj(resource_id, update_obj);
       }
+
     }
   }
 });
@@ -239,8 +254,12 @@ var hours_adjusted_values = function(current, edits) {
     } else {
       var times = ['open_time', 'close_time'];
       times.forEach(function(time) {
-        values[day][time] = get_valid_time(new_day_info[time],
+        if (!old_day_info || !old_day_info[time]) {
+          values[day][time] = new_day_info[time];
+        } else {
+          values[day][time] = get_valid_time(new_day_info[time],
                                            old_day_info[time]);
+        }
       });
     }
   }
