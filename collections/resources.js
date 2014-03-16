@@ -103,7 +103,7 @@ make_location = function(timestamp, contacts, description, short_desc,
          }
 }
 
-make_resource = function(name, timestamp, location, service_areas, sub_services) {
+make_resource = function(name, timestamp, location, service_areas, sub_services, category_inputs) {
   var resource = Resources.findOne({name:name});
   if (resource) {
     return resource._id;
@@ -112,7 +112,7 @@ make_resource = function(name, timestamp, location, service_areas, sub_services)
     var resource_id = Resources.insert(
       {
         name:name, created_time:timestamp, name_route:make_name_route(name),
-        locations:location, service_areas:service_areas, sub_service_ids:sub_services
+        locations:location, service_areas:service_areas, sub_service_ids:sub_services, category_inputs:category_inputs
       }
     );
     return resource_id;

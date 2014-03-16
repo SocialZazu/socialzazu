@@ -1,10 +1,112 @@
 ALL_REQUIRED_MSG = 'Error: For a new resource, all fields required';
 
+Template.category_input.events({
+  'click .category_checkbox': function(e, tmpl) {
+    var target = $(e.target);
+    var checked = target.prop('checked');
+    var resource_id = Session.get('resource_id');
+    if (resource_id) {
+      Meteor.call('check_category_input_to_resource', resource_id, this.field, checked);
+    }
+  },
+});
+
+Template.category_input.helpers({
+  category_dropdown: function() {
+    var field = this.field;
+    return {
+      list: this.values.map(function(value) {
+        return {id:value, field:field, value:value, remove_key:'remove_category_input_from_resource'}
+      }),
+      all: this.list.map(function(value) {
+        return {id:value, field:field, value:value, remove_key:'remove_category_input_from_resource'}
+      }),
+      reactive_save_key: 'add_category_input_to_resource',
+      field:field,
+    }
+  },
+  checked: function() {
+    if (this.values == true || this.autocheck) {
+        return "checked";
+    }
+    return "";
+  },
+  checked_yes_no: function() {
+    if (this.values == true || this.autocheck) {
+      return "Yes";
+    } else if (this.values == false) {
+      return "No";
+    } else {
+      return "Unknown";
+    }
+  },
+  field_class: function() {
+    return get_field_class(this.type);
+  },
+  is_editing: function() {
+    return is_editing_plus();
+  },
+  is_type: function(type) {
+    return this.type == type;
+  },
+  number_toggle: function() {
+    return {
+      width:"90%",
+      current:this.values,
+      id:this.field,
+      class:"category_number"
+    }
+  },
+  value: function() {
+    return input.values;
+  },
+});
+
+Template.category_inputs.helpers({
+  has_inputs: function() {
+    return true; //TODO: make correct.
+  },
+  inputs: function() {
+    var original_values = this.values;
+    var input_reasons = {};
+    var inputs_in_order = [];
+    var checks = [];
+    var numbers = [];
+    var dropdowns = [];
+    this.services.forEach(function(service_input) { //[{service.name, service.inputs}]
+      var find_inputs = [];
+      service_input.inputs.forEach(function(input) {
+        if (input in input_reasons) {
+          input_reasons[input].push(service_input.name)
+        } else {
+          find_inputs.push(input);
+        }
+      });
+
+      Inputs.find({_id:{$in:find_inputs}}).forEach(function(input) {
+        input.values = get_input_values(input.field, original_values);
+        input_reasons[input._id] = [service_input.name];
+        if (input.type == "checkbox") {checks.push(input)}
+        else if (input.type == "number") {numbers.push(input)}
+        else if (input.type == "dropdown") {dropdowns.push(input)}
+      });
+    });
+    inputs_in_order = inputs_in_order.concat(checks)
+    inputs_in_order = inputs_in_order.concat(dropdowns)
+    inputs_in_order = inputs_in_order.concat(numbers);
+    inputs_in_order.forEach(function(input) {
+      input.reasons = input_reasons[input._id];
+    });
+    return inputs_in_order;
+  },
+});
+
 Template.editor.created = function() {
   Session.set('message', null);
   Session.set('new_service', []);
   Session.set('new_access', []);
   Session.set('new_language', []);
+  Session.set('new_specific_inputs', {})
   Session.set('is_editing', false);
   Session.set('category_id', null);
   Session.set('resource_id', null);
@@ -15,6 +117,7 @@ Template.editor.destroyed = function() {
   Session.set('new_service', null);
   Session.set('new_access', null);
   Session.set('new_language', null);
+  Session.set('new_specific_inputs', null);
   Session.set('is_editing', null);
   Session.set('category_id', null);
   Session.set('resource_id', null);
@@ -76,39 +179,9 @@ Deps.autorun(function() {
   );
 });
 
-Template.edit_access.events({
-  'change select': function(e, tmpl) {
-    var access_name = $(e.target).val();
-    if (!(access_name == 'instr')) {
-      save_reactive_data('add_access_to_resource', access_name);
-    }
-  },
-  'click .remove_access': function(e, tmpl) {
-    var access_name = $(tmpl.find('.remove_access')).attr('id');
-    save_reactive_data('remove_access_from_resource', access_name);
-  }
-});
-
-Template.edit_access.helpers({
-  accessibles: function() {
-    return this.accessibles;
-  },
-  capitalize: function(str) {
-    return capitalize(str);
-  },
-  is_editing: function() {
-    return is_editing_plus();
-  },
-  other_access: function() {
-    var all_access = ['blind', 'deaf', 'elevator', 'parking', 'ramp', 'restroom', 'wheelchair'];
-    var other = array_diff(all_access, this.accessibles);
-    return other;
-  },
-});
-
 Template.edit_address.helpers({
-  field_name: function() {
-    return get_field_name_class();
+  field_class: function() {
+    return get_field_class('input');
   },
   toggle: function(key) {
     var width = null;
@@ -186,9 +259,50 @@ Template.edit_buttons.helpers({
   },
 });
 
+Template.edit_dropdown.events({
+  'change select': function(e, tmpl) {
+    var val = $(e.target).val();
+    var field = $(e.target).attr('field');
+    if (!(val == 'instr')) {
+      save_reactive_data(this.reactive_save_key, field, val);
+    }
+  },
+  'click .remove_dropdown': function(e, tmpl) {
+    var a = $(tmpl.find('.remove_dropdown'));
+    var val = a.attr('id');
+    var field = a.attr('field');
+    var remove_key = a.attr('remove_key')
+    save_reactive_data(remove_key, field, val);
+  }
+});
+
+Template.edit_dropdown.helpers({
+  capitalize: function(str) {
+    return capitalize(str);
+  },
+  field_class: function() {
+    return get_field_class('input');
+  },
+  has_span_size: function() {
+    return this.span_size != null;
+  },
+  is_editing: function() {
+    return is_editing_plus();
+  },
+  list: function() {
+    return this.list;
+  },
+  other_list: function() {
+    if (this.all && this.list) {
+      return array_diff_ids(this.all, this.list);
+    }
+    return this.all;
+  }
+});
+
 Template.edit_field.helpers({
-  field_name: function() {
-    return get_field_name_class();
+  field_class: function() {
+    return get_field_class('input');
   },
   toggle_info: function() {
     return {
@@ -260,8 +374,8 @@ Template.edit_languages.helpers({
 });
 
 Template.edit_phone.helpers({
-  field_name: function() {
-    return get_field_name_class();
+  field_class: function() {
+    return get_field_class('input');
   },
   toggle: function(key) {
     var width = null;
@@ -287,10 +401,19 @@ Template.edit_phone.helpers({
 });
 
 Template.edit_resource.helpers({
-  accessibility_inputs: function() {
+  accessibility_dropdown: function() {
+    var _all = ['blind', 'deaf', 'elevator', 'parking', 'ramp', 'restroom', 'wheelchair'];
     return {
-      resource_id: this._id,
-      accessibles: this.locations.accessibility
+      list: this.locations.accessibility.map(function(value) {
+        return {id:value, value:value, remove_key:'remove_access_from_resource'}
+      }),
+      all: _all.map(function(value) {
+        return {id:value, value:value, remove_key:'remove_access_from_resource'}
+      }),
+      reactive_save_key: 'add_access_to_resource',
+      span_size:3,
+      span_diff:9,
+      field:"Accessibility"
     }
   },
   addresses: function() {
@@ -308,7 +431,10 @@ Template.edit_resource.helpers({
     }
   },
   category_specific_inputs: function() {
-    return Inputs.find({resource_inputs:{$in:this.sub_service_ids}});
+    return {
+      values: this.category_specific_inputs,
+      services: get_service_names_with_parent_inputs(this.sub_service_ids)
+    }
   },
   contacts: function() {
     return this.locations.contacts.slice(0,1) //TODO: allow more contacts
@@ -382,10 +508,18 @@ Template.edit_resource.helpers({
       field: 'Short Desc'
     }
   },
-  sub_services: function() {
+  services_dropdown: function() {
     return {
-      resource_id: this._id,
-      service_ids: this.sub_service_ids
+      list: Services.find({_id:{$in:this.sub_service_ids}}).map(function(service) {
+        return {id:service._id, value:service.name, remove_key:'remove_service_from_resource'}
+      }),
+      all: Services.find({parents:{$exists:true, $ne:null}}).map(function(service) {
+        return {id:service._id, value:service.name, remove_key:'remove_service_from_resource'}
+      }),
+      reactive_save_key: 'add_service_to_resource',
+      span_size:3,
+      span_diff:9,
+      field:"Categories"
     }
   },
   transportation: function() {
@@ -421,38 +555,6 @@ Template.edit_search_resources.rendered = function() {
 
   $('.search-query.tt-hint').width('inherit');
 }
-
-Template.edit_sub_services.events({
-  'click .remove_service': function(e, tmpl) {
-    var service_id = $(tmpl.find('.remove_service')).attr('id');
-    save_reactive_data('remove_service_from_resource', service_id);
-  }
-});
-
-Template.edit_sub_services.helpers({
-  field_name: function() {
-    return get_field_name_class();
-  },
-  is_editing: function() {
-    return is_editing_plus();
-  },
-  margin_top: function() {
-    if (this.ids && this.ids.length > 0) {
-      return "6px";
-    } else {
-      return "3px"
-    }
-  },
-  sub_services: function() {
-    return Services.find({_id:{$in:this.service_ids}}, {sort:{name:1}})
-  },
-  sub_service_ids: function() {
-    return {
-      ids: this.service_ids,
-      _id: this.resource_id
-    }
-  }
-})
 
 Template.is_editing_toggle.helpers({
   is_editing: function() {
@@ -514,10 +616,19 @@ Template.new_resource.events({
 });
 
 Template.new_resource.helpers({
-  accessibility_inputs: function() {
+  accessibility_dropdown: function() {
+    var _all = ['blind', 'deaf', 'elevator', 'parking', 'ramp', 'restroom', 'wheelchair'];
     return {
-      resource_id: null,
-      accessibles: Session.get('new_access')
+      list: Session.get('new_access').map(function(value) {
+        return {id:value, value:value, remove_key: 'remove_access_from_resource'};
+      }),
+      all: _all.map(function(value) {
+        return {id:value, value:value, remove_key: 'remove_access_from_resource'};
+      }),
+      reactive_save_key: 'add_access_to_resource',
+      span_size:3,
+      span_diff:9,
+      field: "Accessibility"
     }
   },
   audience: function() {
@@ -538,8 +649,10 @@ Template.new_resource.helpers({
     return {index:0, phone_number:'', phone_hours:''};
   },
   category_specific_inputs: function() {
-    var services = Session.get('new_service');
-    return Inputs.find({resource_inputs:{$in:services}});
+    return {
+      values: Session.get('new_specific_inputs'),
+      services: get_service_names_with_parent_inputs(Session.get('new_service'))
+    }
   },
   contact_name: function() {
     return {
@@ -591,10 +704,18 @@ Template.new_resource.helpers({
       field: 'Short Desc'
     }
   },
-  sub_services: function() {
+  services_dropdown: function() {
     return {
-      resource_id: null,
-      service_ids: Session.get('new_service')
+      list: Services.find({_id:{$in:Session.get('new_service')}}).map(function(service) {
+        return {id:service._id, value:service.name, remove_key:'remove_service_from_resource'}
+      }),
+      all: Services.find({parents:{$exists:true, $ne:null}}).map(function(service) {
+        return {id:service._id, value:service.name, remove_key: 'remove_service_from_resource'};
+      }),
+      reactive_save_key: 'add_service_to_resource',
+      span_size:3,
+      span_diff:9,
+      field:"Categories"
     }
   },
   transportation: function() {
@@ -654,12 +775,35 @@ Template.select_service.events({
 
 Template.select_service.helpers({
   other_services: function() {
-    return Services.find({_id:{$not:{$in:this.ids}}}, {sort:{name:1}});
+    return Services.find({_id:{$not:{$in:this.ids}}, parents:{$exists:true, $ne:null}}, {sort:{name:1}});
   }
 });
 
 var collate_address_edits = function() {
   return collate_class_edits($('.edit_address'), ['street', 'city', 'zipcode']);
+}
+
+var collate_category_inputs = function(resource_id) {
+  var ret = {};
+  if (!resource_id) {
+    var checkboxes = $('.category_checkbox');
+    checkboxes.each(function(ch) {
+      var checkbox = checkboxes[ch];
+      var id = checkbox.getAttribute('id').split('_input')[0];
+      var checked = checkbox.checked;
+      ret[id] = checked;
+    });
+  }
+  var numbers = $('.category_number');
+  numbers.each(function(n) {
+    var number = numbers[n];
+    var id = number.getAttribute('id').split('_input')[0];
+    var value = number.value;
+    if (value && value != '') {
+      ret[id] = value;
+    }
+  });
+  return ret;
 }
 
 var collate_class_edits = function(class_elems, fields) {
@@ -703,12 +847,18 @@ var collate_edits = function(all_required) {
                 'Short_Desc', 'Eligibility', 'Email', 'Fees', 'How_To_Apply',
                 'Name', 'Transportation', 'Website']
   var resource_id = Session.get('resource_id');
+  ret['category_specific_inputs'] = collate_category_inputs(resource_id)
 
   if (!resource_id) { //new resource ... add service_ids
     ret['sub_service_ids'] = Session.get('new_service');
     ret['accessibility'] = Session.get('new_access');
     ret['languages'] = Session.get('new_language');
     ret['counties'] = [Session.get('county')._id]; //TODO: change to incorporate more counties
+
+    var _new_specific_inputs = Session.get('new_specific_inputs')
+    for (var key in _new_specific_inputs) {
+      ret['category_specific_inputs'][key] = _new_specific_inputs[key];
+    }
   }
   fields.forEach(function(field) {
     var edit = collate_edit(field);
@@ -766,11 +916,72 @@ var display_day = function(day) {
   }
 }
 
-var get_field_name_class = function() {
+var get_service_names_with_parent_inputs = function(service_ids) {
+  var ret = [];
+  var parents = [];
+  Services.find({_id:{$in:service_ids}}).forEach(function(service) {
+    if (service.parents) {
+      parents = parents.concat(service.parents);
+    }
+    var name = service.name;
+    var inputs = service.resource_inputs;
+    if (inputs) {
+      ret.push({name:name, inputs:inputs});
+    }
+  });
+  Services.find({_id:{$in:parents}}).forEach(function(service) {
+    var name = service.name;
+    var inputs = service.resource_inputs;
+    if (inputs) {
+      ret.push({name:name, inputs:inputs});
+    }
+  });
+  return ret;
+}
+
+var get_category_input_ids = function(services) {
+  var input_ids = {};
+  var parents = [];
+  Services.find({_id:{$in:services}}).forEach(function(service) {
+    if (service.resource_inputs && service.resource_inputs.length > 0) {
+      var service_id = service._id;
+      if (!(service_id in input_ids)) {
+        input_ids[service_id] = [];
+      }
+      for (var input_id in service.resource_inputs) {
+        input_ids[service_id].push(input_id);
+      }
+    }
+    parents = parents.concat(service.parents);
+  });
+  Services.find({_id:{$in:parents}}).forEach(function(parent) {
+    if (parent.resource_inputs && parent.resource_inputs.length > 0) {
+      input_ids = input_ids.concat(parent.resource_inputs);
+    }
+    var parent_id = parent._id;
+    if (!(parent_id in input_ids)) {
+      input_ids[parent_id] = [];
+    }
+    for (var input_id in parent.resource_inputs) {
+      input_ids[parent_id].push(input_id);
+    }
+  });
+  return input_ids;
+}
+
+var get_field_class = function(type) {
   if (is_editing_plus()) {
-    return 'field_name';
+    return 'field_' + type;
   }
   return '';
+}
+
+var get_input_values = function(field, values) {
+  if (values && field && field in values) {
+    return values[field];
+  } else {
+    return [];
+  }
 }
 
 var is_editing_plus = function() {
@@ -783,7 +994,26 @@ var obj_trim = function(obj, key) {
   return ret;
 }
 
-var save_reactive_data = function(instr, value) {
+var _save_reactive_data_category_input = function(instr, field, value) {
+  var resource_id = Session.get('resource_id');
+  if (resource_id) {
+    Meteor.call(instr, resource_id, field, value);
+  } else {
+    var parts = instr.split('_');
+    var type_change = parts[0];
+    if (type_change == 'remove') {
+      _session_var_splice_category(field, value);
+    } else if (type_change == 'add') {
+      _session_var_push_category(field, value);
+    }
+  }
+}
+
+var save_reactive_data = function(instr, field, value) {
+  if (instr.indexOf('category_input') > -1) {
+    _save_reactive_data_category_input(instr, field, value);
+    return;
+  }
   var resource_id = Session.get('resource_id');
   if (resource_id) {
     Meteor.call(instr, resource_id, value);
@@ -869,7 +1099,6 @@ var validate_hours = function(hours) {
   //skipping vlaidating hours on client side right now.
   //do it on server side if there's a diff.
   var days = ['m_f', 'sat', 'sun'];
-
   for (var day in hours) {
     var input = hours[day];
     if (input.closed) {

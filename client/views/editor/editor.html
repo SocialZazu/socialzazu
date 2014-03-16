@@ -1,3 +1,42 @@
+<template name="category_input">
+  <div class="row-fluid">
+    <div class="span4 {{field_class}}">
+      {{name}}
+    </div>
+    <div class="span5">
+      {{#if is_type "dropdown"}}
+        {{> edit_dropdown category_dropdown}}
+      {{/if}}
+      {{#if is_type "number"}}
+        {{> is_editing_toggle number_toggle}}
+      {{/if}}
+      {{#if is_type "checkbox"}}
+        {{#if is_editing}}
+          <input {{checked}} type="checkbox" id="{{field}}_input" style="height:20px" class="category_checkbox">
+        {{else}}
+          {{checked_yes_no}}
+        {{/if}}
+      {{/if}}
+    </div>
+    <div class="span3" style="position:relative; top:6px; line-height:8px; font-size:60%">
+      {{#each reasons}}
+      <i class="red">{{this}}</i>
+      {{/each}}
+    </div>
+  </div>
+</template>
+
+<template name="category_inputs">
+  {{#if has_inputs}}
+  <hr class="style-two">
+  <div style="text-align:center">Category Specific</div>
+  <hr class="style-two">
+  {{/if}}
+  {{#each inputs}}
+  {{> category_input}}
+  {{/each}}
+</template>
+
 <template name="editor">
   <div class="row-fluid">
     <div class="span6">
@@ -60,39 +99,9 @@
   </div>
 </template>
 
-<template name="edit_access">
-  <div class="row-fluid">
-    <div class="span3">
-      Accessibility:
-    </div>
-    <div class="span9">
-      {{#if is_editing}}
-      {{#each accessibles}}
-      <a class="btn btn-default btn-small remove_access" style="margin-bottom:3px" href="#" id="{{this}}">
-        <i class="icon-remove"></i> {{capitalize this}}
-      </a>
-      {{/each}}
-      <div class="row-fluid" style="margin-top:{{margin_top}}">
-        <select class="form-control">
-          <option value="instr">Add Accessibility</option>
-          {{#each other_access}}
-          <option value="{{this}}">{{capitalize this}}</option>
-          {{/each}}
-        </select>
-      </div>
-      {{else}}
-      {{#each accessibles}}
-      <a class="btn btn-default btn-small" href="#">
-        {{capitalize this}}
-      </a>
-      {{/each}}
-      {{/if}}
-    </div>
-</template>
-
 <template name="edit_address">
   <div class="row-fluid edit_address" index="{{index}}">
-    <div class="span3 {{field_name}}">
+    <div class="span3 {{field_class}}">
       Address:
     </div>
     <div class="span4">
@@ -140,9 +149,44 @@
   </div>
 </template>
 
+<template name="edit_dropdown">
+  {{#if has_span_size}}
+  <div class="row-fluid">
+    <div class="span{{span_size}}">
+      {{field}}
+    </div>
+    <div class="span{{span_diff}}">
+  {{/if}}
+      {{#if is_editing}}
+      {{#each list}}
+      <a class="btn btn-default btn-small remove_dropdown" style="margin-bottom:3px" href="#" id="{{id}}" remove_key="{{remove_key}}" field="{{field}}">
+        <i class="icon-remove"></i> {{capitalize value}}
+      </a>
+      {{/each}}
+      <div class="row-fluid" style="margin-top:{{margin_top}}">
+        <select class="form-control" field="{{field}}">
+          <option value="instr">Select From List</option>
+          {{#each other_list}}
+          <option value="{{id}}">{{capitalize value}}</option>
+          {{/each}}
+        </select>
+      </div>
+      {{else}}
+      {{#each list}}
+      <a class="btn btn-default btn-small" href="#">
+        {{capitalize value}}
+      </a>
+      {{/each}}
+      {{/if}}
+  {{#if has_span_size}}
+    </div>
+  </div>
+  {{/if}}
+</template>
+
 <template name="edit_field">
   <div class="row-fluid">
-    <div class="span3 {{field_name}}">
+    <div class="span3 {{field_class}}">
       {{field}}:
     </div>
     <div class="span9">
@@ -230,7 +274,7 @@
 
 <template name="edit_phone">
   <div class="row-fluid edit_phone" index="{{index}}">
-    <div class="span3 {{field_name}}">
+    <div class="span3 {{field_class}}">
       Phone:
     </div>
     <div class="span3">
@@ -266,8 +310,8 @@
           {{#each addresses}} <!--TODO allow for removing address -->
           {{> edit_address}}
           {{/each}}
-          {{> edit_sub_services sub_services}}
-          {{> edit_access accessibility_inputs}}
+          {{> edit_dropdown services_dropdown}}
+          {{> edit_dropdown accessibility_dropdown}}
           {{> edit_languages languages}}
           {{> edit_field short_desc}}
           {{> edit_field description}}
@@ -277,9 +321,7 @@
           {{> edit_field eligibility}}
           {{> edit_field fees}}
           {{> edit_field how_to_apply}}
-          {{#each category_specific_input}}
-          {{> category_input}}
-          {{/each}}
+          {{> category_inputs category_specific_inputs}}
         </div>
       </div>
     </div>
@@ -290,37 +332,10 @@
   {{> search_resources}}
 </template>
 
-<template name="edit_sub_services">
-  <div class="row-fluid">
-    <div class="span3">
-      Categories:
-    </div>
-    <div class="span9">
-      {{#if is_editing}}
-      {{#each sub_services}}
-      <a class="btn btn-default btn-small remove_service" style="margin-bottom:3px" href="#" id="{{_id}}">
-        <i class="icon-remove"></i> {{name}}
-      </a>
-      {{/each}}
-      {{#with sub_service_ids}}
-      <div class="row-fluid" style="margin-top:{{margin_top}}">
-        {{> select_service}}
-      </div>
-      {{/with}}
-      {{else}}
-      {{#each sub_services}}
-      <a class="btn btn-default btn-small" href="#">
-        {{name}}
-      </a>
-      {{/each}}
-      {{/if}}
-    </div>
-</template>
-
 <template name="is_editing_toggle">
   <div class="row-fluid">
     {{#if is_editing}}
-    <input type="text" style="width:{{width}}" placeholder="{{current}}" id="{{id}}_input">
+    <input type="text" style="width:{{width}}" placeholder="{{current}}" id="{{id}}_input" class="{{class}}">
     {{else}}
     {{current}}
     {{/if}}
@@ -343,7 +358,7 @@
 
 <template name="new_field"> <!-- TODO: convert to using edit_field -->
   <div class="row-fluid">
-    <div class="span3 field_name">
+    <div class="span3 field_class">
       {{field}}:
     </div>
     <div class="span9">
@@ -375,11 +390,9 @@
           {{> new_field contact_name}}
           {{> new_field contact_title}}
           {{> edit_phone blank_phone}}
-          {{#with blank_address}}
-          {{> edit_address}}
-          {{/with}}
-          {{> edit_sub_services sub_services}}
-          {{> edit_access accessibility_inputs}}
+          {{> edit_address blank_address}}
+          {{> edit_dropdown services_dropdown}}
+          {{> edit_dropdown accessibility_dropdown}}
           {{> edit_languages languages}}
           {{> new_field short_desc}}
           {{> new_field description}}
@@ -389,9 +402,7 @@
           {{> new_field eligibility}}
           {{> new_field fees}}
           {{> new_field how_to_apply}}
-          {{#each category_specific_input}}
-          {{> category_input}}
-          {{/each}}
+          {{> category_inputs category_specific_inputs}}
         </div>
       </div>
     </div>

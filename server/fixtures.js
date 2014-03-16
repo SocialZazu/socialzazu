@@ -10,7 +10,7 @@ var make_services_and_inputs = function(timestamp) {
   var income_limit = Inputs.insert({name:"Income Limit ($)", field:"income", type:"number"});
 
   /* Housing */
-  var housing_pop = Inputs.insert({name:"Population", type:"dropdown", field:"housing_population", list:["HIV", "Mental Health", "Sober Living", "Battered Women", "Families with Minors", "Single Men", "Single Women", "Veterans", "Elderly"]})
+  var housing_pop = Inputs.insert({name:"Population (Housing)", type:"dropdown", field:"housing_population", list:["HIV", "Mental Health", "Sober Living", "Battered Women", "Families with Minors", "Single Men", "Single Women", "Veterans", "Elderly"]})
   var housing_restrict = Inputs.insert({name:"Restricted", type:"dropdown", field:"housing_deny", list:["Male", "Female", "Children", "Current Drug Use", "Current Alcohol Use", "Criminal Record"]})
   var section_8 = Inputs.insert({name:"Section 8", field:"section_8", type:"checkbox"});
   var max_occupancy = Inputs.insert({name:"Max Occupancy", field:"max_occupancy", type:"number"});
@@ -57,48 +57,48 @@ var make_services_and_inputs = function(timestamp) {
   var percent_taken = Inputs.insert({name:"Fee (%)", type:"number", field:"fee_percent"});
 
   //make parents
-  var s_housing_id = make_parent_service('Housing', timestamp, resource_inputs=[housing_pop, housing_restrict]);
-  var s_food_id = make_parent_service('Food Providers', timestamp, resource_inputs=[food_options]);
-  var s_trans_id = make_parent_service('Transportation', timestamp, resource_inputs=[home_pickup, advance_notice, disability_req]);
-  var s_finaid_id = make_parent_service('Financial Assistance', timestamp, resource_inputs=[finaid_pop, max_amt]);
-  var s_medical_id = make_parent_service('Medical Care', timestamp, resource_inputs=[walkins, referral, insurance]);
-  var s_health_insurance_id = make_parent_service('Health Insurance', timestamp, resource_inputs=[client_age, income_limit]);
+  var s_housing_id = make_parent_service('Housing', timestamp, null, resource_inputs=[housing_pop, housing_restrict]);
+  var s_food_id = make_parent_service('Food Providers', timestamp, null, resource_inputs=[food_options]);
+  var s_trans_id = make_parent_service('Transportation', timestamp, null, resource_inputs=[home_pickup, advance_notice, disability_req]);
+  var s_finaid_id = make_parent_service('Financial Assistance', timestamp, null, resource_inputs=[finaid_pop, max_amt]);
+  var s_medical_id = make_parent_service('Medical Care', timestamp, null, resource_inputs=[walkins, referral, insurance]);
+  var s_health_insurance_id = make_parent_service('Health Insurance', timestamp, null, resource_inputs=[client_age, income_limit]);
   var s_employment_id = make_parent_service('Employment', timestamp);
   var s_pediatrics_id = make_parent_service('Pediatric Care', timestamp);
   var s_suppgroups_id = make_parent_service('Support Groups', timestamp);
 
-  var s_housinglegal_id = make_parent_service('Housing Legal Assistance', timestamp, resource_inputs=[client_age, client_pop, disability, citizenship, insurance]);
-  var s_consumerlaw_id = make_parent_service('Consumer Law', timestamp, resource_inputs=[client_age, client_pop, disability, citizenship, insurance]);
-  var s_criminallaw_id = make_parent_service('Criminal Law', timestamp, resource_inputs=[client_age, client_pop, disability, citizenship, insurance]);
-  var s_dvlaw_id = make_parent_service('Domestic Violence Law', timestamp, resource_inputs=[client_age, client_pop, disability, citizenship, insurance]);
-  var s_employmentlaw_id = make_parent_service('Employment Law', timestamp, resource_inputs=[client_age, client_pop, disability, citizenship, insurance]);
-  var s_estatelaw_id = make_parent_service('Estate Law', timestamp, resource_inputs=[client_age, client_pop, disability, citizenship, insurance]);
-  var s_familylaw_id = make_parent_service('Family Law', timestamp, resource_inputs=[client_age, client_pop, disability, citizenship, insurance]);
-  var s_civillaw_id = make_parent_service('Civil Law', timestamp, resource_inputs=[client_age, client_pop, disability, citizenship, insurance]);
-  var s_personalinjury_id = make_parent_service('Personal Injury', timestamp, resource_inputs=[client_age, client_pop, disability, citizenship, insurance]);
-  var s_medicalcovlaw_id = make_parent_service('Legal Medical Coverage', timestamp, resource_inputs=[client_age, client_pop, disability, citizenship, insurance]);
-  var s_immigrationlaw_id = make_parent_service('Immigration Law', timestamp, resource_inputs=[client_age, client_pop, disability, citizenship, insurance]);
-  var s_policemisconduct_id = make_parent_service('Police Misconduct', timestamp, resource_inputs=[client_age, client_pop, disability, citizenship, insurance]);
+  var s_housinglegal_id = make_parent_service('Housing Legal Assistance', timestamp, null, resource_inputs=[client_age, client_pop, disability, citizenship, insurance]);
+  var s_consumerlaw_id = make_parent_service('Consumer Law', timestamp, null, resource_inputs=[client_age, client_pop, disability, citizenship, insurance]);
+  var s_criminallaw_id = make_parent_service('Criminal Law', timestamp, null, resource_inputs=[client_age, client_pop, disability, citizenship, insurance]);
+  var s_dvlaw_id = make_parent_service('Domestic Violence Law', timestamp, null, resource_inputs=[client_age, client_pop, disability, citizenship, insurance]);
+  var s_employmentlaw_id = make_parent_service('Employment Law', timestamp, null, resource_inputs=[client_age, client_pop, disability, citizenship, insurance]);
+  var s_estatelaw_id = make_parent_service('Estate Law', timestamp, null, resource_inputs=[client_age, client_pop, disability, citizenship, insurance]);
+  var s_familylaw_id = make_parent_service('Family Law', timestamp, null, resource_inputs=[client_age, client_pop, disability, citizenship, insurance]);
+  var s_civillaw_id = make_parent_service('Civil Law', timestamp, null, resource_inputs=[client_age, client_pop, disability, citizenship, insurance]);
+  var s_personalinjury_id = make_parent_service('Personal Injury', timestamp, null, resource_inputs=[client_age, client_pop, disability, citizenship, insurance]);
+  var s_medicalcovlaw_id = make_parent_service('Legal Medical Coverage', timestamp, null, resource_inputs=[client_age, client_pop, disability, citizenship, insurance]);
+  var s_immigrationlaw_id = make_parent_service('Immigration Law', timestamp, null, resource_inputs=[client_age, client_pop, disability, citizenship, insurance]);
+  var s_policemisconduct_id = make_parent_service('Police Misconduct', timestamp, null, resource_inputs=[client_age, client_pop, disability, citizenship, insurance]);
 
-  var s_tax_id = make_parent_service('Tax Help', timestamp, resource_inputs=[percent_taken, income_limit]);
+  var s_tax_id = make_parent_service('Tax Help', timestamp, null, resource_inputs=[percent_taken, income_limit]);
   var s_materialgoods_id = make_parent_service('Material Goods', timestamp);
 
   /*make children*/
 
   //housing
   var c_shelter_id = make_child_service('Shelters', timestamp, s_housing_id, init_priority=6, resource_inputs=[max_stay, transit_input]);
-  var c_permhouse_id = make_child_service('Permanent Housing', timestamp, s_housing_id,
+  var c_permhouse_id = make_child_service('Permanent Housing', timestamp, s_housing_id, null,
                                           resource_inputs=[citizenship, section_8, max_occupancy, income_limit, credit_check, smoking, pets, parking, kitchen, fridge]);
   var c_transhouse_id = make_child_service('Transitional Housing', timestamp, s_housing_id,
-                                          resource_inputs=[citizenship, max_stay, income_limit, smoking, pets, parking, kitchen, fridge]);
+                                          null, resource_inputs=[citizenship, max_stay, income_limit, smoking, pets, parking, kitchen, fridge]);
 
   //food
-  var c_wic_id = make_child_service('WIC', timestamp, s_food_id, resource_inputs=[minor_children]);
+  var c_wic_id = make_child_service('WIC', timestamp, s_food_id, null, resource_inputs=[minor_children]);
   var c_pantry_id = make_child_service('Food Pantry', timestamp, s_food_id, init_priority=1, resource_inputs=[days_supply]);
   var c_hotmeals_id = make_child_service('Hot Meals', timestamp, s_food_id, init_priority=2);
-  var c_homedeliv_id = make_child_service('Home Meal Delivery', timestamp, s_food_id, resource_inputs=[home_meal_pop, meals_served]);
-  var c_grocery_id = make_child_service('Grocery Stores', timestamp, s_food_id, resource_inputs=[accepts_fs, accepts_wic]);
-  var c_resta_id = make_child_service('Restaurants', timestamp, s_food_id, resource_inputs=[accepts_fs, accepts_wic]);
+  var c_homedeliv_id = make_child_service('Home Meal Delivery', timestamp, s_food_id, null, resource_inputs=[home_meal_pop, meals_served]);
+  var c_grocery_id = make_child_service('Grocery Stores', timestamp, s_food_id, null, resource_inputs=[accepts_fs, accepts_wic]);
+  var c_resta_id = make_child_service('Restaurants', timestamp, s_food_id, null, resource_inputs=[accepts_fs, accepts_wic]);
 
   //trans
   var c_trans_id = make_child_service('Transportation Service', timestamp, s_trans_id)
@@ -127,8 +127,8 @@ var make_services_and_inputs = function(timestamp) {
   var c_mmhapp_id = make_child_service('Medicare Medicaid HealthPAC', timestamp, s_health_insurance_id);
 
   //employment
-  var c_jobtrain_id = make_child_service('Job Training', timestamp, s_employment_id, resource_inputs=[veteran, citizenship]);
-  var c_jobfind_id = make_child_service('Employment Search', timestamp, s_employment_id, resource_inputs=[veteran, citizenship]);
+  var c_jobtrain_id = make_child_service('Job Training', timestamp, s_employment_id, null, resource_inputs=[veteran, citizenship]);
+  var c_jobfind_id = make_child_service('Employment Search', timestamp, s_employment_id, null, resource_inputs=[veteran, citizenship]);
   var c_jobproblem_id = make_child_service('Employment Problems', timestamp, s_employment_id);
 
   //tax

@@ -7,6 +7,12 @@ Meteor.methods({
     Resources.update({_id:resource_id}, {$addToSet:{'locations.accessibility':access_name}});
   },
 
+  add_category_input_to_resource: function(resource_id, field, value) {
+    var update_query = {};
+    update_query['category_specific_inputs.' + field] = value;
+    Resources.update({_id:resource_id}, {$addToSet:update_query});
+  },
+
   add_language_to_resource: function(resource_id, language) {
     Resources.update({_id:resource_id}, {$addToSet:{'locations.languages':language}});
   },
@@ -15,6 +21,12 @@ Meteor.methods({
     //assuming service_id is a sub for now...
     Resources.update({_id:resource_id}, {$addToSet:{sub_service_ids:service_id}});
     Services.update({_id:service_id}, {$push:{resources:resource_id}});
+  },
+
+  check_category_input_to_resource: function(resource_id, field, checked) {
+    var update_query = {};
+    update_query['category_specific_inputs.' + field] = checked;
+    Resources.update({_id:resource_id}, {$set:update_query});
   },
 
   flag_resource: function(resource_id, user_id) {
@@ -54,6 +66,12 @@ Meteor.methods({
 
   remove_access_from_resource: function(resource_id, access_name) {
     Resources.update({_id:resource_id}, {$pull:{'locations.accessibility':access_name}});
+  },
+
+  remove_category_input_from_resource: function(resource_id, field, value) {
+    var update_query = {};
+    update_query['category_specific_inputs.' + field] = value;
+    Resources.update({_id:resource_id}, {$pull:update_query});
   },
 
   remove_language_from_resource: function(resource_id, language) {
@@ -117,7 +135,7 @@ Meteor.methods({
             edits['How_To_Apply']
           )
         ),
-        edits['counties'], edits['sub_service_ids']
+        edits['counties'], edits['sub_service_ids'], edits['category_specific_inputs']
       )
       Services.update({_id:{$in:edits['sub_service_ids']}},
                       {$addToSet:{resources:resource_id}});
@@ -155,7 +173,6 @@ Meteor.methods({
         new_locations[field] = edits_or_current(edits[field], resource.locations, field);
       });
 
-
       special_fields.forEach(function(field) {
         if (field == 'phones') {
           var oldvals = resource.locations.phones;
@@ -182,9 +199,11 @@ Meteor.methods({
       update_resource(resource.locations.contacts[0], new_contacts, user_id,
                       resource_id, timestamp, 'contacts', 'locations.contacts.0');
 
-      var new_names = {};
-      new_names['name'] = edits_or_current(edits['name'], resource.name, 'name')
-      new_names['name_route'] = make_name_route(new_names['name']);
+      if ('name' in edits) {
+        var new_names = {};
+        new_names['name'] = edits_or_current(edits['name'], resource.name, 'name')
+        new_names['name_route'] = make_name_route(new_names['name']);
+      }
 
 
       var update_obj = {}; //TODO: make everything one big change like this one
@@ -201,6 +220,15 @@ Meteor.methods({
         if (value !== resource[field]) {
           resource_field_change(timestamp, resource_id, field, resource[field], value, user_id);
           update_obj[field] = value;
+        }
+      }
+      for (field in edits['category_specific_inputs']) {
+        var value = edits['category_specific_inputs'][field];
+        if (!resource.category_specific_inputs || value !== resource.category_specific_inputs[field]) {
+          if (resource.category_specific_inputs) {var oldval = resource.category_specific_inputs[field];}
+          else {var oldval = null;}
+          resource_field_change(timestamp, resource_id, field, oldval, value, user_id);
+          update_obj['category_specific_inputs.' + field] = value;
         }
       }
       if (Object.keys(update_obj).length > 0) {
