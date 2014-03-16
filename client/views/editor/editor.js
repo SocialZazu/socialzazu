@@ -510,10 +510,10 @@ Template.edit_resource.helpers({
   },
   services_dropdown: function() {
     return {
-      list: Services.find({_id:{$in:this.sub_service_ids}}).map(function(service) {
+      list: Services.find({_id:{$in:this.sub_service_ids}}, {sort:{name:1}}).map(function(service) {
         return {id:service._id, value:service.name, remove_key:'remove_service_from_resource'}
       }),
-      all: Services.find({parents:{$exists:true, $ne:null}}).map(function(service) {
+      all: Services.find({parents:{$exists:true, $ne:null}}, {sort:{name:1}}).map(function(service) {
         return {id:service._id, value:service.name, remove_key:'remove_service_from_resource'}
       }),
       reactive_save_key: 'add_service_to_resource',
@@ -706,10 +706,10 @@ Template.new_resource.helpers({
   },
   services_dropdown: function() {
     return {
-      list: Services.find({_id:{$in:Session.get('new_service')}}).map(function(service) {
+      list: Services.find({_id:{$in:Session.get('new_service')}}, {sort:{name:1}}).map(function(service) {
         return {id:service._id, value:service.name, remove_key:'remove_service_from_resource'}
       }),
-      all: Services.find({parents:{$exists:true, $ne:null}}).map(function(service) {
+      all: Services.find({parents:{$exists:true, $ne:null}}, {sort:{name:1}}).map(function(service) {
         return {id:service._id, value:service.name, remove_key: 'remove_service_from_resource'};
       }),
       reactive_save_key: 'add_service_to_resource',
@@ -762,21 +762,6 @@ Template.open_flags.helpers({
       type:'flag'
     }
   },
-});
-
-Template.select_service.events({
-  'change select': function(e, tmpl) {
-    var service_id = $(e.target).val();
-    if (!(service_id == 'instr')) {
-      save_reactive_data('add_service_to_resource', service_id);
-    }
-  }
-});
-
-Template.select_service.helpers({
-  other_services: function() {
-    return Services.find({_id:{$not:{$in:this.ids}}, parents:{$exists:true, $ne:null}}, {sort:{name:1}});
-  }
 });
 
 var collate_address_edits = function() {
