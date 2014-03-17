@@ -261,12 +261,11 @@ Template.resource_well.helpers({
 
 Template.resource_hours.helpers({
   day_of_week: function() {
-    var fields = ['m_f', 'sat', 'sun'];
     var ret = [];
-    for (var i = 0; i < fields.length; i++) {
-      if (fields[i] in this) {
-        var day = this[fields[i]];
-        day['day'] = capitalize(fields[i]);
+    for (var i = 0; i < days_abbr.length; i++) {
+      if (days_abbr[i] in this) {
+        var day = this[days_abbr[i]];
+        day['day'] = capitalize(days_abbr[i]);
         if (day['day'].indexOf('_') > -1) {
           day['day'] = day['day'].split('_').join('-').toUpperCase();
         }

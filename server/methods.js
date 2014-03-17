@@ -252,7 +252,7 @@ var adjust_values_array = function(values, edits, slice_num) {
 }
 
 var closed_day = function(day) {
-  return ('closed' in day) && day.closed;
+  return day && ('closed' in day) && day.closed;
 }
 
 var copy_array_with_obj = function(arr) {

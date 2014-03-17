@@ -274,21 +274,6 @@ Template.edit_field.helpers({
 });
 
 Template.edit_hours.helpers({
-  m_f: function() {
-    return obj_trim(this, 'm_f');
-  },
-  sat: function() {
-    return obj_trim(this, 'sat');
-  },
-  sun: function() {
-    return obj_trim(this, 'sun');
-  },
-});
-
-Template.edit_hours_subfield.helpers({
-  period_title: function() {
-    return display_day(this.period);
-  },
   checked: function() {
     if (this.closed) {
       return "checked";
@@ -304,8 +289,17 @@ Template.edit_hours_subfield.helpers({
   close_placeholder: function() {
     return time_placeholder(this.close_time);
   },
+  edit_hours_subfields: function() {
+    var _this = this;
+    return days_abbr.map(function(day) {
+      return obj_trim(_this, day);
+    })
+  },
   open_placeholder: function() {
     return time_placeholder(this.open_time);
+  },
+  period_title: function() {
+    return display_day(this.period);
   },
 });
 
@@ -829,8 +823,7 @@ var _collate_hours_time = function(day, time) {
 
 var collate_hours_edits = function() {
   var ret = {};
-  var days = ['m_f', 'sat', 'sun'];
-  days.forEach(function(day) {
+  days_abbr.forEach(function(day) {
     ret[day] = {};
     ret[day]['closed'] = $('#' + day + '_checkbox').prop('checked');
     ret[day]['open_time'] = _collate_hours_time(day, 'open');
@@ -844,13 +837,7 @@ var collate_phone_edits = function() {
 }
 
 var display_day = function(day) {
-  if (day == 'm_f') {
-    return 'Mon-Fri';
-  } else if (day == 'sat') {
-    return 'Saturday';
-  } else {
-    return 'Sunday';
-  }
+  return capitalize(day);
 }
 
 var get_category_input_ids = function(services) {

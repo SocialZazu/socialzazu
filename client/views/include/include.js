@@ -48,6 +48,8 @@ category_specific_inputs = function(services, values) {
   return inputs_in_order;
 }
 
+days_abbr = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+
 var get_input_values = function(field, values) {
   if (values && field && field in values) {
     return values[field];
