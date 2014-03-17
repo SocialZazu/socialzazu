@@ -10,7 +10,10 @@ Deps.autorun(function() {
         var service_ids = Session.get('display_services').map(
           function(service) {return service._id}
         );
-        Resources.find({sub_service_ids:{$in:service_ids}}).forEach(
+
+        map.remove_all_markers();
+
+        Resources.find({sub_service_ids:{$in:service_ids}, service_areas:Session.get('county')._id}).forEach(
           function(resource) {
             add_marker(resource)
           }
