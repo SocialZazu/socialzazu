@@ -286,7 +286,7 @@ Template.edit_hours.helpers({
     }
     return "No";
   },
-  close_placeholder: function() {
+  close_time: function() {
     return time_placeholder(this.close_time);
   },
   edit_hours_subfields: function() {
@@ -295,7 +295,7 @@ Template.edit_hours.helpers({
       return obj_trim(_this, day);
     })
   },
-  open_placeholder: function() {
+  open_time: function() {
     return time_placeholder(this.open_time);
   },
   period_title: function() {

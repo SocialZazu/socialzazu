@@ -72,6 +72,10 @@
   color: #00FF33;
 }
 
+.black {
+  color: black !important
+}
+
 input {
   height: 34px;
 }

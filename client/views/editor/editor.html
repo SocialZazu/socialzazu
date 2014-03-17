@@ -221,16 +221,16 @@
     </div>
     <div class="span3">
       {{#if is_editing}}
-      <input style="width:42px; height:12px" class="form-control" type="text" id="{{period}}_open" placeholder="{{open_placeholder}}">
+      <input style="width:42px; height:12px" class="form-control black" type="text" id="{{period}}_open" value="{{open_time}}">
       {{else}}
-      {{open_placeholder}}
+      {{open_time}}
       {{/if}}
     </div>
     <div class="span2">
       {{#if is_editing}}
-      <input style="width:42px; height:12px" class="form-control" type="text" id="{{period}}_close" placeholder="{{close_placeholder}}">
+      <input style="width:42px; height:12px" class="form-control black" type="text" id="{{period}}_close" value="{{close_time}}">
       {{else}}
-      {{close_placeholder}}
+      {{close_time}}
       {{/if}}
     </div>
   </div>
@@ -331,7 +331,7 @@
 <template name="is_editing_toggle">
   <div class="row-fluid">
     {{#if is_editing}}
-    <input type="text" style="width:{{width}}" placeholder="{{current}}" id="{{id}}_input" class="{{class}}">
+    <input type="text" style="width:{{width}}" id="{{id}}_input" class="black" value="{{current}}">
     {{else}}
     {{current}}
     {{/if}}
