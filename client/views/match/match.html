@@ -1,0 +1,92 @@
+<template name="match">
+  <div class="row-fluid">
+    <div class="span5">
+      {{> match_buttons}}
+    </div>
+    <div class="span3">
+      {{> match_instructions}}
+    </div>
+    <div class="span4">
+      {{> match_service}} <!-- Replace with select2 -->
+    </div>
+  </div>
+  <div class="row-fluid">
+    <div class="span5">
+      {{> match_inputs category_specific_inputs}}
+    </div>
+    <div class="span7">
+      {{> match_results}}
+    </div>
+  </div>
+</template>
+
+<template name="match_buttons">
+</template>
+
+<template name="match_service">
+  {{#each list}}
+  <a class="btn btn-default btn-small remove_service" style="margin-bottom:3px" href="#" id="{{id}}">
+    <i class="fa fa-times"></i> {{capitalize value}}
+  </a>
+  {{/each}}
+  <div class="row-fluid">
+    <select class="form-control" style="width:100%">
+      <option value="instr">Select From List</option>
+      {{#each other_list}}
+      <option value="{{_id}}">{{capitalize name}}</option>
+      {{/each}}
+    </select>
+  </div>
+</template>
+
+<template name="match_input">
+  <div class="row-fluid">
+    <div class="span3">
+      {{name}}
+    </div>
+    <div class="span6">
+      {{#if is_type "dropdown"}}
+        {{#each list}}
+        <a class="btn btn-default btn-small remove_dropdown" style="margin-bottom:3px" href="#" id="{{this}}" field="{{../field}}">
+          <i class="fa fa-times"></i> {{capitalize this}}
+        </a>
+        {{/each}}
+        <div class="row-fluid" style="margin-top:{{margin_top}}">
+          <select class="form-control" field="{{field}}">
+            <option value="instr">Select From List</option>
+            {{#each other_list}}
+            <option value="{{this}}">{{capitalize this}}</option>
+            {{/each}}
+          </select>
+        </div>
+      {{/if}}
+      {{#if is_type "number"}}
+        <input type="text" style="width:{{width}}" placeholder="{{current}}" id="{{id}}_input" class="{{class}}">
+      {{/if}}
+      {{#if is_type "checkbox"}}
+        <input {{checked}} type="checkbox" id="{{field}}_input" style="height:20px">
+      {{/if}}
+    </div>
+    <div class="span3" style="position:relative; top:6px; line-height:8px; font-size:60%">
+      {{#each reasons}}
+      <i class="green">{{this}}</i>
+      {{/each}}
+    </div>
+  </div>
+</template>
+
+<template name="match_inputs">
+  {{#each inputs}}
+  {{> match_input}}
+  {{/each}}
+</template>
+
+<template name="match_instructions">
+  <p>Hi --> Instructions</p>
+</template>
+
+<template name="match_results">
+  {{#each results}}
+  {{> resource_well}}
+  {{/each}}
+</template>
