@@ -71,6 +71,11 @@ map = {
     this.markers.forEach(function(marker) {
       marker.setMap(null);
     });
+
+    this.markers = []; 
+    this.markerIDs = [];
+    this.marker_services = [];
+    this.latLngs = [];
   },
 
   calc_bounds: function() {
