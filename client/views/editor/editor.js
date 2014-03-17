@@ -355,12 +355,12 @@ Template.edit_languages.events({
   'click #add_language': function(e, tmpl) {
     var new_language = $(tmpl.find('#language_input')).val();
     if (new_language && new_language.trim() !== '') {
-      save_reactive_data('add_language_to_resource', new_language);
+      save_reactive_data('add_language_to_resource', null, new_language);
     }
   },
   'click .remove_language': function(e, tmpl) {
     var language = $(tmpl.find('.remove_language')).attr('name');
-    save_reactive_data('remove_language_from_resource', language);
+    save_reactive_data('remove_language_from_resource', null, language);
   },
 });
 
@@ -994,13 +994,13 @@ var _save_reactive_data_category_input = function(instr, field, value) {
   }
 }
 
-var save_reactive_data = function(instr, field, value) {
+var save_reactive_data = function(instr, field, value, always_use_session) {
   if (instr.indexOf('category_input') > -1) {
     _save_reactive_data_category_input(instr, field, value);
     return;
   }
   var resource_id = Session.get('resource_id');
-  if (resource_id) {
+  if (!always_use_session && resource_id) {
     Meteor.call(instr, resource_id, value);
   } else {
     var parts = instr.split('_');
