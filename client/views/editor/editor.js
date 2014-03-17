@@ -1,5 +1,16 @@
 ALL_REQUIRED_MSG = 'Error: For a new resource, all fields required';
 
+Deps.autorun(function() {
+  Meteor.subscribe(
+    'resources_from_id',
+    Session.get('resource_id')
+  );
+  Meteor.subscribe(
+    'open_flags',
+    Session.get('county')
+  );
+});
+
 Template.category_input.events({
   'click .category_checkbox': function(e, tmpl) {
     var target = $(e.target);
@@ -43,9 +54,6 @@ Template.category_input.helpers({
   field_class: function() {
     return get_field_class(this.type);
   },
-  is_editing: function() {
-    return is_editing_plus();
-  },
   is_type: function(type) {
     return this.type == type;
   },
@@ -67,38 +75,8 @@ Template.category_inputs.helpers({
     return true; //TODO: make correct.
   },
   inputs: function() {
-    var original_values = this.values;
-    var input_reasons = {};
-    var inputs_in_order = [];
-    var checks = [];
-    var numbers = [];
-    var dropdowns = [];
-    this.services.forEach(function(service_input) { //[{service.name, service.inputs}]
-      var find_inputs = [];
-      service_input.inputs.forEach(function(input) {
-        if (input in input_reasons) {
-          input_reasons[input].push(service_input.name)
-        } else {
-          find_inputs.push(input);
-        }
-      });
-
-      Inputs.find({_id:{$in:find_inputs}}).forEach(function(input) {
-        input.values = get_input_values(input.field, original_values);
-        input_reasons[input._id] = [service_input.name];
-        if (input.type == "checkbox") {checks.push(input)}
-        else if (input.type == "number") {numbers.push(input)}
-        else if (input.type == "dropdown") {dropdowns.push(input)}
-      });
-    });
-    inputs_in_order = inputs_in_order.concat(checks)
-    inputs_in_order = inputs_in_order.concat(dropdowns)
-    inputs_in_order = inputs_in_order.concat(numbers);
-    inputs_in_order.forEach(function(input) {
-      input.reasons = input_reasons[input._id];
-    });
-    return inputs_in_order;
-  },
+    return category_specific_inputs(this.services, this.values);
+  }
 });
 
 Template.editor.created = function() {
@@ -166,17 +144,6 @@ Template.editor.helpers({
   show_edit_resource: function() {
     return Session.get('resource_id') !== null;
   }
-});
-
-Deps.autorun(function() {
-  Meteor.subscribe(
-    'resources_from_id',
-    Session.get('resource_id')
-  );
-  Meteor.subscribe(
-    'open_flags',
-    Session.get('county')
-  );
 });
 
 Template.edit_address.helpers({
@@ -268,8 +235,8 @@ Template.edit_dropdown.events({
     }
   },
   'click .remove_dropdown': function(e, tmpl) {
-    var a = $(tmpl.find('.remove_dropdown'));
-    var val = a.attr('id');
+    var a = $(e.target).closest('a');
+    var id = a.attr('id');
     var field = a.attr('field');
     var remove_key = a.attr('remove_key')
     save_reactive_data(remove_key, field, val);
@@ -277,17 +244,11 @@ Template.edit_dropdown.events({
 });
 
 Template.edit_dropdown.helpers({
-  capitalize: function(str) {
-    return capitalize(str);
-  },
   field_class: function() {
     return get_field_class('input');
   },
   has_span_size: function() {
     return this.span_size != null;
-  },
-  is_editing: function() {
-    return is_editing_plus();
   },
   list: function() {
     return this.list;
@@ -343,9 +304,6 @@ Template.edit_hours_subfield.helpers({
   close_placeholder: function() {
     return time_placeholder(this.close_time);
   },
-  is_editing: function() {
-    return is_editing_plus();
-  },
   open_placeholder: function() {
     return time_placeholder(this.open_time);
   },
@@ -365,9 +323,6 @@ Template.edit_languages.events({
 });
 
 Template.edit_languages.helpers({
-  is_editing: function() {
-    return is_editing_plus();
-  },
   languages: function() {
     return this.languages;
   },
@@ -557,9 +512,6 @@ Template.edit_search_resources.rendered = function() {
 }
 
 Template.is_editing_toggle.helpers({
-  is_editing: function() {
-    return is_editing_plus();
-  },
   width: function() {
     var width = this.width || "92%"
     return width;
@@ -586,7 +538,7 @@ Template.needs_edit.helpers({
     }
   },
   resources: function() {
-    return Resources.find({needs_edit:true}, {limit:15})
+    return Resources.find({needs_edit:true, service_areas:Session.get('county')._id}, {limit:15})
   },
 });
 
@@ -901,29 +853,6 @@ var display_day = function(day) {
   }
 }
 
-var get_service_names_with_parent_inputs = function(service_ids) {
-  var ret = [];
-  var parents = [];
-  Services.find({_id:{$in:service_ids}}).forEach(function(service) {
-    if (service.parents) {
-      parents = parents.concat(service.parents);
-    }
-    var name = service.name;
-    var inputs = service.resource_inputs;
-    if (inputs) {
-      ret.push({name:name, inputs:inputs});
-    }
-  });
-  Services.find({_id:{$in:parents}}).forEach(function(service) {
-    var name = service.name;
-    var inputs = service.resource_inputs;
-    if (inputs) {
-      ret.push({name:name, inputs:inputs});
-    }
-  });
-  return ret;
-}
-
 var get_category_input_ids = function(services) {
   var input_ids = {};
   var parents = [];
@@ -961,15 +890,7 @@ var get_field_class = function(type) {
   return '';
 }
 
-var get_input_values = function(field, values) {
-  if (values && field && field in values) {
-    return values[field];
-  } else {
-    return [];
-  }
-}
-
-var is_editing_plus = function() {
+is_editing_plus = function() {
   return Session.get('is_editing') || !Session.get('resource_id');
 }
 
@@ -987,20 +908,20 @@ var _save_reactive_data_category_input = function(instr, field, value) {
     var parts = instr.split('_');
     var type_change = parts[0];
     if (type_change == 'remove') {
-      _session_var_splice_category(field, value);
+      session_var_splice_obj('new_specific_inputs', field, value);
     } else if (type_change == 'add') {
-      _session_var_push_category(field, value);
+      session_var_push_obj('new_specific_inputs', field, value);
     }
   }
 }
 
-var save_reactive_data = function(instr, field, value, always_use_session) {
+var save_reactive_data = function(instr, field, value) {
   if (instr.indexOf('category_input') > -1) {
     _save_reactive_data_category_input(instr, field, value);
     return;
   }
   var resource_id = Session.get('resource_id');
-  if (!always_use_session && resource_id) {
+  if (resource_id) {
     Meteor.call(instr, resource_id, value);
   } else {
     var parts = instr.split('_');

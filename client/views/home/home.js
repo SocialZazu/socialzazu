@@ -161,9 +161,6 @@ Template.map_home.destroyed = function() {
 };
 
 Template.resource_inputs.helpers({
-  capitalize: function(str) {
-    return capitalize(str);
-  },
   fields: function() {
     return Object.keys(this).sort();
   },

@@ -39,7 +39,7 @@ Meteor.publish('search_resources_from_county', function(county) {
 });
 
 Meteor.publish('resources_from_services', function(services, county) {
-  if (!services || !county) {
+  if (!services || services.length == 0 || !county) {
     return [];
   }
   service_ids = services.map(function(service) {
