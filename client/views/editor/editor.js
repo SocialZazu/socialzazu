@@ -261,7 +261,7 @@ Template.edit_dropdown.events({
     var id = a.attr('id');
     var field = a.attr('field');
     var remove_key = a.attr('remove_key')
-    save_reactive_data(remove_key, field, val);
+    save_reactive_data(remove_key, field, id);
   }
 });
 
