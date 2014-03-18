@@ -141,6 +141,7 @@ Meteor.methods({
                       {$addToSet:{resources:resource_id}});
       Changes.insert({created_time:timestamp, target_resource_id:resource_id,
                       new_resource:true, editor_id:user_id});
+      return {"success":true}
     } else { //existing resource
       var resource = Resources.findOne({_id:resource_id});
 
@@ -234,7 +235,7 @@ Meteor.methods({
       if (Object.keys(update_obj).length > 0) {
         set_update_resource_obj(resource_id, update_obj);
       }
-
+      return {success:"true"}
     }
   }
 });

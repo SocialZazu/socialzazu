@@ -1,4 +1,5 @@
 ALL_REQUIRED_MSG = 'Error: For a new resource, all fields required';
+MAX_RESOURCES = 15;
 
 Deps.autorun(function() {
   Meteor.subscribe(
@@ -88,6 +89,7 @@ Template.editor.created = function() {
   Session.set('is_editing', false);
   Session.set('category_id', null);
   Session.set('resource_id', null);
+  Session.set('skip_resource_page', 0);
 }
 
 Template.editor.destroyed = function() {
@@ -106,6 +108,18 @@ Template.editor.events({
     Session.set('resource_id', null);
     Session.set('is_editing', false);
     Session.set('message', null);
+  },
+  'click #next_page_edit': function(e, tmpl) {
+    key = 'skip_resource_page'
+    var val = Session.get(key) + 1;
+    if (val * MAX_RESOURCES < total_needs_edit_count()) {
+      Session.set(key, val);
+    }
+  },
+  'click #previous_page_edit': function(e, tmpl) {
+    key = 'skip_resource_page'
+    var val = Session.get(key) - 1;
+    Session.set(key, Math.max(0, val));
   }
 });
 
@@ -118,21 +132,26 @@ Template.editor.helpers({
     return '';
   },
   has_needs_edit: function() {
-    return Resources.find({needs_edit:true}).count() > 0
+    return total_needs_edit_count() > 0;
   },
   has_open_flags: function() {
     return Flags.find({open:true}).count() > 0
   },
-  message: function() {
-    var message = Session.get('message');
-    if (message && message.slice(0,7) == 'Success') {
-      return message;
-    }
-    return '';
+  max_resources: function() {
+    return MAX_RESOURCES.toString();
+  },
+  page_start_edit: function() {
+    return 1 + Session.get('skip_resource_page')*MAX_RESOURCES
+  },
+  page_end_edit: function() {
+    return Math.min(
+      (1 + Session.get('skip_resource_page'))*MAX_RESOURCES,
+      total_needs_edit_count()
+    )
   },
   resource_datums: function() {
     return {
-      datums: Resources.find({}).map(function(resource) {
+      datums: Resources.find().map(function(resource) {
         return {value:resource.name, name_route:resource._id}
       }),
       placeholder:"Search Resource to Edit"
@@ -143,6 +162,9 @@ Template.editor.helpers({
   },
   show_edit_resource: function() {
     return Session.get('resource_id') !== null;
+  },
+  total_edit: function() {
+    return total_needs_edit_count();
   }
 });
 
@@ -186,7 +208,7 @@ Template.edit_buttons.events({
       Meteor.call('save_resource_edits',
                   Session.get('resource_id'), Meteor.userId(), edits,
                   function(error, result) {
-                    if (!e) {
+                    if (!error) {
                       Session.set('message', 'Success: Saved edits. Thanks!');
                       Session.set('is_editing', false);
                     }
@@ -513,12 +535,18 @@ Template.is_editing_toggle.helpers({
 });
 
 Template.message.helpers({
-  message: function() {
+  color: function() {
     var message = Session.get('message');
     if (message && message.slice(0,5) == 'Error') {
-      return message;
+      return "red";
+    } else if (message && message.slice(0,7) == 'Success') {
+      return "green";
+    } else {
+      return '';
     }
-    return '';
+  },
+  message: function() {
+    return Session.get('message') || '';
   }
 });
 
@@ -532,7 +560,7 @@ Template.needs_edit.helpers({
     }
   },
   resources: function() {
-    return Resources.find({needs_edit:true, service_areas:Session.get('county')._id}, {limit:15})
+    return Resources.find({needs_edit:true, service_areas:Session.get('county')._id}, {sort:{name:1}, limit:MAX_RESOURCES, skip:Session.get('skip_resource_page')*MAX_RESOURCES});
   },
 });
 
@@ -931,6 +959,10 @@ var time_placeholder = function(time) {
     st = '0' + st;
   }
   return st;
+}
+
+var total_needs_edit_count = function() {
+  return Resources.find({needs_edit:true}).count();
 }
 
 var trim = function(current) {
