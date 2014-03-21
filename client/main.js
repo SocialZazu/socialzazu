@@ -25,7 +25,7 @@ Deps.autorun(function() {
 
         Resources.find({sub_service_ids:{$in:service_ids}, service_areas:Session.get('county')._id}).forEach(
           function(resource) {
-            add_marker(resource)
+            map.add_marker_from_resource(resource)
           }
         )
       }

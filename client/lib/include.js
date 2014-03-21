@@ -48,6 +48,8 @@ category_specific_inputs = function(services, values) {
   return inputs_in_order;
 }
 
+colors = ["#74F0F2", "#B3F2C2", "#DCFA9B", "#FABDFC", "#F5A2AD",
+          "#BDC9FC", "#A2B2F5", "#F5E1A2", "#AEF5A2", "#42F55D"];
 days_abbr = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 weekdays_minus_mon = ['tue', 'wed', 'thu', 'fri'];
 

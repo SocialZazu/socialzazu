@@ -61,9 +61,6 @@ Template.home.helpers({
   },
 });
 
-
-var colors = ["#74F0F2", "#B3F2C2", "#DCFA9B", "#FABDFC", "#F5A2AD",
-              "#BDC9FC", "#A2B2F5", "#F5E1A2", "#AEF5A2", "#42F55D"];
 Template.home.rendered = function() {
   var i = -1;
   if (!Session.get('display_services') || Session.get('display_services').length < SIDEBAR_NUM) {
@@ -386,29 +383,6 @@ var remove_all_markers = function() {
   map.remove_all_markers();
 }
 
-var add_marker = function(resource) {
-  var addresses = resource.locations.address;
-  for (var i = 0; i < addresses.length; i++) {
-    var adrs = addresses[i];
-    if (adrs.coordinates && typeof adrs.coordinates.lat !== 'undefined' &&
-        typeof adrs.coordinates.lng !== 'undefined') {
-      var exists = map.marker_exists(resource._id, i);
-      if (!exists[0]) {
-        var icon = get_icon_for_resource(resource);
-        map.add_new_marker({
-          id:resource._id, position:i, title:resource.name,
-          lat:adrs.coordinates.lat,
-          lng:adrs.coordinates.lng,
-          services:resource.sub_service_ids,
-          icon:icon});
-      } else {
-        add_existing_marker(resource);
-        break;
-      }
-    }
-  }
-};
-
 var add_all_selected = function() {
   $('.serviceBox').addClass('selected');
   _.each($('.serviceBox').not('.titleBox'), function(box) {
@@ -425,25 +399,6 @@ var adjust_map_display = function(service_id, f) {
     f(resource);
   });
 };
-
-var get_icon_for_resource = function(resource) {
-  var display_services = Session.get('display_services');
-  var icon = false;
-  resource.sub_service_ids.forEach(function(service_id) {
-    display_services.forEach(function(service) {
-      if (service._id == service_id) {
-        icon = '/gflags/' + icon_from_color(service.color);
-      }
-    });
-  });
-  return icon;
-}
-
-var icons = ["paleblue_MarkerA.png", "green_MarkerA.png", "yellow_MarkerA.png",
-              "pink_MarkerA.png", "red_MarkerA.png", "blue_MarkerA.png"]
-var icon_from_color = function(color) {
-  return icons[colors.indexOf(color)];
-}
 
 var military_to_regular = function(time) {
   //convert military, e.g. 1700 --> 5pm
