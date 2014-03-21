@@ -90,49 +90,55 @@ Meteor.methods({
     if (resource_id == null) { //new resource
       var addresses = [];
       edits['address'].forEach(function(address) {
-        addresses.push(make_address(street=address['street'],
-                                    city=address['city'],
-                                    state='CA', //TODO: fix this when later
-                                    zipcode=address['zipcode'],
-                                    type="physical",
-                                    lat=null,
-                                    lng=null)
-                      )
+        var street = address['street'];
+        if (street != '' && street != 'Street') {
+          addresses.push(make_address(street=address['street'],
+                                      city=address['city'],
+                                      state='CA', //TODO: fix this when later
+                                      zipcode=address['zipcode'],
+                                      type="physical",
+                                      lat=null,
+                                      lng=null)
+                        )
+        }
       });
 
       var phones = [];
       edits['phones'].forEach(function(phone) {
-        phones.push(make_phone(phone['phone_number'],
-                               phone['phone_hours'],
-                               "voice")
-                   );
+        var phone_number = phone['phone_number'];
+        if (phone_number != '' && phone_number != 'Number') {
+          phones.push(make_phone(phone['phone_number'],
+                                 phone['phone_hours'],
+                                 "voice")
+                     );
+        }
       });
 
-      var contacts=[make_contact(edits['Contact_Name'], edits['Contact_Title'])]
+      var contacts=[make_contact(edits['contact_name'], edits['contact_title'])]
 
       var resource_id = make_resource(
-        edits['Name'], timestamp,
+        edits['name'], timestamp,
         make_location(
           timestamp,
           contacts,
-          edits['Description'],
-          edits['Short_Desc'],
+          edits['description'],
+          edits['short_desc'],
           addresses,
-          edits['Contact_Name'],
+          edits['contact_name'],
           edits['hours'],
-          edits['Transportation'],
+          edits['transportation'],
           edits['accessibility'],
           edits['languages'],
           phones,
           [make_internet(
-            edits['Website'],
-            edits['Email'])
+            edits['url'],
+            edits['email'])
           ],
           make_services(
-            edits['Audience'],
-            edits['Eligibility'],
-            edits['Fees'],
-            edits['How_To_Apply']
+            edits['audience'],
+            edits['eligibility'],
+            edits['fees'],
+            edits['how_to_apply']
           )
         ),
         edits['counties'], edits['sub_service_ids'], edits['category_specific_inputs']
@@ -141,7 +147,7 @@ Meteor.methods({
                       {$addToSet:{resources:resource_id}});
       Changes.insert({created_time:timestamp, target_resource_id:resource_id,
                       new_resource:true, editor_id:user_id});
-      return {"success":true}
+      return {"success":true, resource_id:resource_id}
     } else { //existing resource
       var resource = Resources.findOne({_id:resource_id});
 
@@ -184,11 +190,13 @@ Meteor.methods({
           var oldvals = resource.locations.address;
           var newvals = copy_array_with_obj(oldvals);
           adjust_values_array(newvals, edits[field], 0)
-          update_resource(resource.locations.phones, newvals, user_id, resource_id, timestamp, 'address', 'locations.address');
+          update_resource(resource.locations.address, newvals, user_id, resource_id, timestamp, 'address', 'locations.address');
         } else if (field == 'hours') {
           var current = resource.locations.hours;
           var newvals = hours_adjusted_values(current, edits[field]);
-          update_resource(current, newvals, user_id, resource_id, timestamp, 'hours', 'locations.hours');
+          if (Object.keys(newvals).length > 0) {
+            update_resource(current, newvals, user_id, resource_id, timestamp, 'hours', 'locations.hours');
+          }
         }
       });
       update_resource(resource.locations.service_poc, new_poc, user_id, resource_id,
@@ -235,7 +243,7 @@ Meteor.methods({
       if (Object.keys(update_obj).length > 0) {
         set_update_resource_obj(resource_id, update_obj);
       }
-      return {success:"true"}
+      return {"success":true}
     }
   }
 });
@@ -287,7 +295,7 @@ var hours_adjusted_values = function(current, edits) {
           values[day][time] = new_day_info[time];
         } else {
           values[day][time] = get_valid_time(new_day_info[time],
-                                           old_day_info[time]);
+                                             old_day_info[time]);
         }
       });
     }
@@ -301,7 +309,7 @@ var edits_or_current = function(edit, current, key) {
 
 var get_valid_time = function(new_time, old_time) {
   //already validated that it fit hte regex or was ''
-  if (new_time && !(new_time == '')) {
+  if (new_time && !(new_time == '') && !(new_time == 'Blank')) {
     return new_time;
   }
   return old_time;

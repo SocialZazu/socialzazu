@@ -1,16 +1,7 @@
-ALL_REQUIRED_MSG = 'Error: For a new resource, all fields required';
+ALL_REQUIRED_MSG = 'Error: Missing a required field (name, address, contact info, descriptions)'
+required_fields = ['name', 'address', 'contact_name', 'contact_title',
+                   'description', 'short_desc', 'email', 'phones'];
 MAX_RESOURCES = 15;
-
-Deps.autorun(function() {
-  Meteor.subscribe(
-    'resources_from_id',
-    Session.get('resource_id')
-  );
-  Meteor.subscribe(
-    'open_flags',
-    Session.get('county')
-  );
-});
 
 Template.category_input.events({
   'click .category_checkbox': function(e, tmpl) {
@@ -208,9 +199,11 @@ Template.edit_buttons.events({
       Meteor.call('save_resource_edits',
                   Session.get('resource_id'), Meteor.userId(), edits,
                   function(error, result) {
-                    if (!error) {
-                      Session.set('message', 'Success: Saved edits. Thanks!');
+                    if (!error && result['success']) {
+                      success_message_with_warning();
                       Session.set('is_editing', false);
+                    } else {
+                      Session.set('message', 'Error: Eek, server mistake. We apologize');
                     }
                   }
                  );
@@ -537,12 +530,14 @@ Template.is_editing_toggle.helpers({
 Template.message.helpers({
   color: function() {
     var message = Session.get('message');
-    if (message && message.slice(0,5) == 'Error') {
-      return "red";
-    } else if (message && message.slice(0,7) == 'Success') {
-      return "green";
-    } else {
+    if (!message) {
       return '';
+    } else if (message.slice(0,5) == 'Error') {
+      return "red";
+    } else if (message.slice(0,7) == 'Success') {
+      return "green";
+    } else if (message.slice(0,7) == 'Warning') {
+      return 'orange';
     }
   },
   message: function() {
@@ -580,13 +575,19 @@ Template.new_resource.events({
     if (!message || !(message.slice(0,5) == "Error")) {
       Meteor.call('save_resource_edits',
                   null, Meteor.userId(), edits,
-                  function(e, result) {
-                    Session.set('Saved edits. Thanks!');
-                    Session.set('is_editing', false);
+                  function(error, result) {
+                    if (!error & result['success']) {
+                      success_message_with_warning();
+                      Session.set('is_editing', false);
+                      Session.set('resource_id', result['resource_id']);
+                    } else {
+                      Session.set('message', 'Error: Eek, server mistake. We apologize');
+                    }
                   }
                  );
     }
   },
+
 });
 
 Template.new_resource.helpers({
@@ -909,6 +910,10 @@ is_editing_plus = function() {
   return Session.get('is_editing') || !Session.get('resource_id');
 }
 
+var is_placeholder_value = function(value, placeholder) {
+  return value == '' || value == placeholder
+}
+
 var obj_trim = function(obj, key) {
   var ret = obj[key] || {};
   ret['period'] = key;
@@ -950,6 +955,16 @@ var save_reactive_data = function(instr, field, value) {
   }
 }
 
+var success_message_with_warning = function() {
+  var message = Session.get('message');
+  if (message && message.slice(0,7) == "Warning") {
+    message += " Saved other edits";
+  } else {
+    message = "Success: Saved edits. Thanks!";
+  }
+  Session.set('message', message);
+}
+
 var time_placeholder = function(time) {
   if (!time) {
       return 'Blank';
@@ -962,7 +977,7 @@ var time_placeholder = function(time) {
 }
 
 var total_needs_edit_count = function() {
-  return Resources.find({needs_edit:true}).count();
+  return Resources.find({needs_edit:true}, {limit:100}).count();
 }
 
 var trim = function(current) {
@@ -975,7 +990,7 @@ var trim = function(current) {
 var validate_address = function(addresses) {
   for (var i = 0; i < addresses.length; i++) {
     var address = addresses[i];
-    if (address['zipcode'] && !(address['zipcode'] == '') && !(/^\d{5}$/.test(address['zipcode']))) {
+    if (address['zipcode'] && !(is_placeholder_value(address['zipcode'], 'Zip')) && !(/^\d{5}$/.test(address['zipcode']))) {
       return [false, 'Error: Zipcode malformed'];
     }
     //TODO: another clause to make sure that zipcode in county
@@ -985,14 +1000,9 @@ var validate_address = function(addresses) {
 
 var validate_edits = function(edits, all_required) {
   var resource_id = Session.get('resource_id');
-  if (!resource_id && all_required && Object.keys(edits).length == 0) {
-    Session.set('message', ALL_REQUIRED_MSG);
-    return false;
-  }
-
   for (var key in edits) {
     var val = edits[key];
-    if (!resource_id && all_required && !val) {
+    if (!resource_id && !val && required_fields.indexOf(key) > -1) {
       Session.set('message', ALL_REQUIRED_MSG);
       return false;
     }
@@ -1002,14 +1012,6 @@ var validate_edits = function(edits, all_required) {
       return false;
     }
 
-    if (key == 'hours') {
-      var hours = validate_hours(val);
-      if (!hours[0]) {
-        Session.set('message', hours[1]);
-        return false;
-      }
-    }
-
     if (key == 'address') {
       var address = validate_address(val);
       if (!address[0]) {
@@ -1017,13 +1019,18 @@ var validate_edits = function(edits, all_required) {
         return false;
       }
     }
+
+    if (key == 'hours') {
+      var hours = validate_hours(val);
+      if (!hours[0]) {
+        Session.set('message', hours[1]);
+        delete edits['hours'] //can pass validation even if hours fails
+      }
+    }
   }
 }
 
 var validate_hours = function(hours) {
-  //skipping vlaidating hours on client side right now.
-  //do it on server side if there's a diff.
-  var days = ['m_f', 'sat', 'sun'];
   for (var day in hours) {
     var input = hours[day];
     if (input.closed) {
@@ -1036,10 +1043,10 @@ var validate_hours = function(hours) {
     var close_military = validate_time(input['close_time']);
     if (open_military && close_military) {
       if (close_military < open_military) {
-        return [false, 'Error: ' + display_day(day) + "'s closing time is earlier than it's opening time"];
+        return [false, 'Warning: ' + display_day(day) + "'s closing time is earlier than it's opening time. Not setting hours."];
       }
-    } else if (!(input['open_time'] == '' && input['close_time'] == '')) {
-      return [false, 'Error: ' + display_day(day) + ' is not in correct military time'];
+    } else if (!(is_placeholder_value(input['open_time'], 'Blank') && is_placeholder_value(input['close_time'], 'Blank'))) {
+      return [false, 'Warning: ' + display_day(day) + ' is not in correct military time. Not setting hours.'];
     }
   }
   return [true, ''];
