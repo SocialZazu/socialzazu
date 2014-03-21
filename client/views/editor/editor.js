@@ -81,6 +81,7 @@ Template.editor.created = function() {
   Session.set('category_id', null);
   Session.set('resource_id', null);
   Session.set('skip_resource_page', 0);
+  Session.set('weekday_hours_the_same', true);
 }
 
 Template.editor.destroyed = function() {
@@ -288,9 +289,21 @@ Template.edit_field.helpers({
   }
 });
 
+Template.edit_hours.events({
+  'click #weekday_hours_checkbox': function(e, tmpl) {
+    Session.set('weekday_hours_the_same', $(e.target).prop('checked'));
+  }
+});
+
 Template.edit_hours.helpers({
-  checked: function() {
+  checked_closed: function() {
     if (this.closed) {
+      return "checked";
+    }
+    return "";
+  },
+  checked_hours_same: function() {
+    if (Session.get('weekday_hours_the_same')) {
       return "checked";
     }
     return "";
@@ -310,12 +323,21 @@ Template.edit_hours.helpers({
       return obj_trim(_this, day);
     })
   },
+  is_monday: function() {
+    return this.period == 'mon';
+  },
   open_time: function() {
     return time_placeholder(this.open_time);
   },
   period_title: function() {
     return display_day(this.period);
   },
+  show_subfield: function() {
+    if (Session.get('weekday_hours_the_same') && weekdays_minus_mon.indexOf(this.period) > -1) {
+      return "none";
+    }
+    return "block";
+  }
 });
 
 Template.edit_languages.events({
@@ -854,9 +876,13 @@ var collate_hours_edits = function() {
   var ret = {};
   days_abbr.forEach(function(day) {
     ret[day] = {};
-    ret[day]['closed'] = $('#' + day + '_checkbox').prop('checked');
-    ret[day]['open_time'] = _collate_hours_time(day, 'open');
-    ret[day]['close_time'] = _collate_hours_time(day, 'close');
+    if (Session.get('weekday_hours_the_same') && weekdays_minus_mon.indexOf(day) > -1) {
+      ret[day] = ret['mon'];
+    } else {
+      ret[day]['closed'] = $('#' + day + '_checkbox').prop('checked');
+      ret[day]['open_time'] = _collate_hours_time(day, 'open');
+      ret[day]['close_time'] = _collate_hours_time(day, 'close');
+    }
   });
   return ret;
 }
@@ -977,7 +1003,7 @@ var time_placeholder = function(time) {
 }
 
 var total_needs_edit_count = function() {
-  return Resources.find({needs_edit:true}, {limit:100}).count();
+  return Resources.find({needs_edit:true}).count();
 }
 
 var trim = function(current) {

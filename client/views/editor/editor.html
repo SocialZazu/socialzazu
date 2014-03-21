@@ -203,24 +203,36 @@
     </div>
     <div class="span2">Day</div>
     <div class="span2">Closed?</div>
-    <div class="span3">Open Time</div>
+    <div class="span2">Open Time</div>
     <div class="span2">Close Time</div>
   </div>
   {{#each edit_hours_subfields}}
-  <div class="row-fluid">
-    <div class="span2 offset3">
+  <div class="row-fluid" style="display:{{show_subfield}}">
+    <div class="span3">
+      {{#if is_monday}}
+      <div class="row-fluid">
+        <div class="span4">
+          <input {{checked_hours_same}} type="checkbox" id="weekday_hours_checkbox" style="height:20px">
+        </div>
+        <div class="span8">
+          M-F hours same
+        </div>
+      </div>
+      {{/if}}
+    </div>
+    <div class="span2">
       {{period_title}}:
     </div>
     <div class="span2">
       {{#if is_editing}}
-      <input {{checked}} type="checkbox" id="{{period}}_checkbox" style="position:relative; left:20%; width:20px; height:20px">
+      <input {{checked_closed}} type="checkbox" id="{{period}}_checkbox" style="position:relative; left:20%; width:20px; height:20px">
       {{else}}
       <span style="position:relative; left:20%">
         {{closed_yes_no}}
       </span>
       {{/if}}
     </div>
-    <div class="span3">
+    <div class="span2">
       {{#if is_editing}}
       <input style="width:42px; height:12px" class="form-control black" type="text" id="{{period}}_open" value="{{open_time}}">
       {{else}}

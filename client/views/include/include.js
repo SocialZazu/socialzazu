@@ -49,6 +49,7 @@ category_specific_inputs = function(services, values) {
 }
 
 days_abbr = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+weekdays_minus_mon = ['tue', 'wed', 'thu', 'fri'];
 
 var get_input_values = function(field, values) {
   if (values && field && field in values) {
