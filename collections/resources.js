@@ -68,58 +68,59 @@
 //    }
 Resources = new Meteor.Collection('resources');
 
-make_contact = function(name, title) {
-  return {name:name, title:title};
-}
-
-make_address = function(street, city, state, zipcode, type, lat, lng) {
-  return {street:street, city:city, state:state, zipcode:zipcode,
-          type:type, coordinates:{lat:lat, lng:lng}};
-}
-
-make_phone = function(number, hours, type) {
-  return {number:number, hours:hours, type:type};
-}
-
-make_internet = function(url, email) {
-  return {url:url, email:email}
-}
-
-make_services = function(audience, eligibility, fees, how_to_apply) {
-  return {audience:audience, eligibility:eligibility, fees:fees,
-          how_to_apply:how_to_apply};
-}
-
-make_location = function(timestamp, contacts, description, short_desc,
-                         addresses, service_poc, hours,
-                         transportation, accessibility, languages,
-                         phones, internet_resource, services) {
-  return {created_time:timestamp,
-          contacts:contacts, description:description,
-          short_desc:short_desc, address:addresses, service_poc:[service_poc],
-          hours:hours, transportation:transportation, languages:languages,
-          accessibility:accessibility, phones:phones, services:services,
-          internet_resource:internet_resource
-         }
-}
-
-make_resource = function(name, timestamp, location, service_areas, sub_services, category_inputs) {
-  var resource = Resources.findOne({name:name});
-  if (resource) {
-    return resource._id;
-  } else {
-    name = name.trim()
-    var resource_id = Resources.insert(
-      {
-        name:name, created_time:timestamp, name_route:make_name_route(name),
-        locations:location, service_areas:service_areas, sub_service_ids:sub_services, category_inputs:category_inputs
-      }
-    );
-    return resource_id;
-  }
-}
-
 if (Meteor.server) {
+  make_contact = function(name, title) {
+    return {name:name, title:title};
+  }
+
+  make_address = function(street, city, state, zipcode, type, lat, lng) {
+    return {street:street, city:city, state:state, zipcode:zipcode,
+            type:type, coordinates:{lat:lat, lng:lng}};
+  }
+
+  make_phone = function(number, hours, type) {
+    return {number:number, hours:hours, type:type};
+  }
+
+  make_internet = function(url, email) {
+    return {url:url, email:email}
+  }
+
+  make_services = function(audience, eligibility, fees, how_to_apply) {
+    return {audience:audience, eligibility:eligibility, fees:fees,
+            how_to_apply:how_to_apply};
+  }
+
+  make_location = function(timestamp, contacts, description, short_desc,
+                           addresses, service_poc, hours,
+                           transportation, accessibility, languages,
+                           phones, internet_resource, services) {
+    return {created_time:timestamp,
+            contacts:contacts, description:description,
+            short_desc:short_desc, address:addresses, service_poc:[service_poc],
+            hours:hours, transportation:transportation, languages:languages,
+            accessibility:accessibility, phones:phones, services:services,
+            internet_resource:internet_resource
+           }
+  }
+
+  make_resource = function(name, timestamp, location, service_areas, sub_services, category_inputs) {
+    var resource = Resources.findOne({name:name});
+    if (resource) {
+      return resource._id;
+    } else {
+      name = name.trim()
+      var resource_id = Resources.insert(
+        {
+          name:name, created_time:timestamp, name_route:make_name_route(name),
+          locations:location, service_areas:service_areas,
+          sub_service_ids:sub_services, category_inputs:category_inputs
+        }
+      );
+      return resource_id;
+    }
+  }
+
   set_update_resource_obj = function(id, obj) {
     Resources.update({_id:id}, {$set:obj});
   }
@@ -129,5 +130,4 @@ if (Meteor.server) {
     update_query[update_str] = value;
     set_update_resource_obj(id, update_query);
   }
-
 }
