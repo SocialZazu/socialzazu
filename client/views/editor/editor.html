@@ -103,7 +103,7 @@
 <template name="edit_address">
   <div class="row-fluid edit_address" index="{{index}}">
     <div class="span3 {{field_class}}">
-      Address:
+      Address*:
     </div>
     <div class="span4">
       {{#with toggle "street"}}
@@ -188,7 +188,7 @@
 <template name="edit_field">
   <div class="row-fluid">
     <div class="span3 {{field_class}}">
-      {{field}}:
+      {{field}}{{is_required_field field}}:
     </div>
     <div class="span9">
       {{> is_editing_toggle toggle_info}}
@@ -356,7 +356,7 @@
 <template name="new_field"> <!-- TODO: convert to using edit_field -->
   <div class="row-fluid">
     <div class="span3 field_class">
-      {{field}}:
+      {{field}}{{is_required_field field}}:
     </div>
     <div class="span9">
       <input type="text" style="width:92%" id="{{id}}">
