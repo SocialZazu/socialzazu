@@ -1,26 +1,6 @@
 Session.set('user_flags', []);
 
 Deps.autorun(function() {
-  if (Session.get('display_services') && Session.get('display_services').length == SIDEBAR_NUM) {
-    Meteor.subscribe(
-      'resources_from_services',
-      Session.get('display_services'),
-      Session.get('county'),
-      function() {
-        var service_ids = Session.get('display_services').map(
-          function(service) {return service._id}
-        );
-
-        map.remove_all_markers();
-
-        Resources.find({sub_service_ids:{$in:service_ids}, service_areas:Session.get('county')._id}).forEach(
-          function(resource) {
-            add_marker(resource)
-          }
-        )
-      }
-    )
-  }
 });
 
 Template.flag_control.events({
@@ -248,7 +228,7 @@ Template.resource_well.helpers({
     if (this.sub_service_ids) {
       num_services = this.sub_service_ids.length;
     }
-    return Services.find({_id:{$in:this.sub_service_ids}}, {name:true}).map(function(service) { //hack to get the sub_services |'s to work right
+    return Services.find({_id:{$in:this.sub_service_ids}}, {name:true}).map(function(service) { //hack to get the sub_services display |'s to work right
       i += 1;
       if (i == num_services) {
         return {last:true, name:service.name}
