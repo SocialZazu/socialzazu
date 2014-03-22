@@ -1,4 +1,13 @@
 Deps.autorun(function() {
+  //Base
+  Meteor.subscribe('counties', function() {
+    if (!Session.get('county')) {
+      Session.set('county', Counties.findOne({name:"Alameda"}));
+    }
+  });
+  if (Roles.userIsInRole(Meteor.userId(), ['editor', 'admin'])) {
+    Meteor.subscribe('open_flags', Session.get('county'))
+  }
 
   //Editor
   Meteor.subscribe(

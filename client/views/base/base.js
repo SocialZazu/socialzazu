@@ -1,12 +1,4 @@
 Deps.autorun(function() {
-  Meteor.subscribe('counties', function() {
-    if (!Session.get('county')) {
-      Session.set('county', Counties.findOne({name:"Alameda"}));
-    }
-  });
-  if (Roles.userIsInRole(Meteor.userId(), ['editor', 'admin'])) {
-    Meteor.subscribe('open_flags', Session.get('county'))
-  }
 });
 
 Template.base.helpers({
@@ -45,6 +37,7 @@ Template.select_county.events({
       var county = Counties.findOne({_id:val});
       Session.set('resource_id', null);
       Session.set('county', county);
+      Session.set('skip_resource_page', 0)
       if (Session.get('map')) {
         var coords = county.coordinates;
         pan_to(new google.maps.LatLng(coords.lat, coords.lng));
