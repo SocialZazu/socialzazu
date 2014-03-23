@@ -1,10 +1,11 @@
 // Resources are social services like Therapists, Treatment Centers, Food Banks, etc -
-//    {updated_time:Int, name_route:String,
+//    {updated_time:Int,
+//     name_route:String,
 //     name:String,
 //     locations: [
 //       {
 //         name:String,
-//         contacts: [
+//         contact: [
 //           {
 //             name:String,
 //             title:String
@@ -25,11 +26,10 @@
 //             }
 //           },
 //         ],
-//         service_poc: [
-//           String (e.g. Kathy Kinkaid (kkinkaid@mpslc.com))
-//         ],
-//         hours: { //Ohana Spec only has String here
-//           m_f:{open_time:Int (military), close_time:Int, closed:Boolean},
+//         hours: {
+//           mon:{open_time:Int (military), close_time:Int, closed:Boolean},
+//           tue:{open_time:Int (military), close_time:Int, closed:Boolean},
+//           ...
 //           sat:{open_time:Int (military), close_time:Int, closed:Boolean},
 //           sun:{open_time:Int (military), close_time:Int, closed:Boolean},
 //         },
@@ -44,7 +44,6 @@
 //           {
 //             number:String,
 //             hours:String,
-//             type:String (voice / fax)
 //           }
 //         ],
 //         internet_resource: {
@@ -57,9 +56,7 @@
 //             fees:String,
 //             how_to_apply:String,
 //         },
-//         service_areas:[
-//           String (county_ids)
-//         ],
+//         service_area:String (county_id)
 //         sub_service_ids:[
 //           String (service_ids)
 //         ],
