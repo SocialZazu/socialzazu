@@ -583,7 +583,7 @@ Template.needs_edit.helpers({
 
 Template.new_field.helpers({
   id: function() {
-    return this.field.trim().split(' ').join('_') + '_input';
+    return this.trim().split(' ').join('_') + '_input';
   },
 });
 
@@ -629,9 +629,7 @@ Template.new_resource.helpers({
     }
   },
   audience: function() {
-    return {
-      field: 'Audience'
-    }
+    return 'Audience'
   },
   blank_address: function() {
     return {index:0, zipcode:'', city:'', street:''}
@@ -652,54 +650,37 @@ Template.new_resource.helpers({
     }
   },
   contact_name: function() {
-    return {
-      field: 'Contact Name'
-    }
+    return 'Contact Name'
   },
   contact_title: function() {
-    return {
-      field: 'Contact Title'
-    }
+    return 'Contact Title'
   },
   description: function() {
-    return {
-      field: 'Description'
-    }
+    return 'Description'
   },
   eligibility: function() {
-    return {
-      field: 'Eligibility'
-    }
+    return 'Eligibility'
   },
   email: function() {
-    return {
-      field: 'Email'
-    }
+    return 'Email'
   },
   fees: function() {
-    return {
-      field: 'Fees'
-    }
+    return 'Fees'
   },
   how_to_apply: function() {
-    return {
-      field: 'How To Apply'
-    }
+    return 'How To Apply'
   },
-  name: function() {
-    return {
-      field: 'Name'
-    }
+  name_location: function() {
+    return 'Name Location'
+  },
+  name_resource: function() {
+    return 'Name Resource'
   },
   phone: function() {
-    return {
-      field: 'Phone'
-    }
+    return 'Phone'
   },
   short_desc: function() {
-    return {
-      field: 'Short Desc'
-    }
+    return 'Short Desc'
   },
   services_dropdown: function() {
     return {
@@ -716,14 +697,10 @@ Template.new_resource.helpers({
     }
   },
   transportation: function() {
-    return {
-      field: 'Transportation'
-    }
+    return 'Transportation'
   },
   url: function() {
-    return {
-      field: 'Website'
-    }
+    return 'Website'
   },
 });
 

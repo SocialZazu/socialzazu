@@ -370,7 +370,7 @@
 <template name="new_field"> <!-- TODO: convert to using edit_field -->
   <div class="row-fluid">
     <div class="span3 field_class">
-      {{field}}{{is_required_field field}}:
+      {{this}}{{is_required_field this}}:
     </div>
     <div class="span9">
       <input type="text" style="width:92%" id="{{id}}">
@@ -384,7 +384,7 @@
       <div class="controls-wrapper highcontrols-wrapper">
         <div class="row-fluid">
           <div class="span3">
-            <span class="left" style="font-size:larger">New</span>
+            <span class="left" style="font-size:larger">New Resource</span>
           </div>
           <div class="span7">
             {{> message}}
@@ -395,7 +395,9 @@
         </div>
         <hr>
         <div class="row-fluid" style="overflow-y:scroll; height:530px; margin-top:10px">
-          {{> new_field name}}
+          {{> new_field name_resource}}
+          <hr>
+          {{> new_field name_location}}
           {{> new_field url}}
           {{> new_field email}}
           {{> new_field contact_name}}
