@@ -5,7 +5,7 @@
    //  locations: [
    //    {
    //      name:String,
-   //      more_name:String //more info about name
+   //      more_name_info:String //more info about name
    //      contact: [
    //        {
    //          name:String,
