@@ -318,8 +318,6 @@ var location_fields = ['short_desc', 'description', 'audience',
                        'email', 'url', ];
 var contact_fields  = ['contact_title', 'contact_name'];
 var special_fields  = ['phones', 'address', 'hours'];
-var required_fields = ['name', 'address', 'contact_name', 'contact_title',
-                       'description', 'short_desc', 'email', 'phones'];
 var all_required_msg = 'Error: Missing a required field (name, address, contact info, descriptions)'
 
 var is_placeholder_value = function(value, placeholder) {
