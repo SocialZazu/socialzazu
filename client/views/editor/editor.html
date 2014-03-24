@@ -309,30 +309,34 @@
         <hr>
         <div class="row-fluid" style="overflow-y:scroll; height:530px; margin-top:10px">
           {{> edit_field name}}
-          {{> edit_field url}}
-          {{> edit_field email}}
-          {{#each contacts}} <!--TODO allow for removing contacts -->
-          {{> edit_field contact_name}}
-          {{> edit_field contact_title}}
+          <hr>
+          {{#each locations}}
+            {{> edit_field name_location}}
+            {{> edit_field url}}
+            {{> edit_field email}}
+            {{#each contacts}} <!--TODO allow for removing contacts -->
+              {{> edit_field contact_name}}
+              {{> edit_field contact_title}}
+            {{/each}}
+            {{#each phones}} <!--TODO allow for removing phone -->
+            {{> edit_phone}}
+            {{/each}}
+            {{#each addresses}} <!--TODO allow for removing address -->
+            {{> edit_address}}
+            {{/each}}
+            {{> edit_dropdown services_dropdown}}
+            {{> edit_dropdown accessibility_dropdown}}
+            {{> edit_languages languages}}
+            {{> edit_field short_desc}}
+            {{> edit_field description}}
+            {{> edit_hours hours}}
+            {{> edit_field audience}}
+            {{> edit_field eligibility}}
+            {{> edit_field fees}}
+            {{> edit_field how_to_apply}}
+            {{> category_inputs category_specific_inputs}}
           {{/each}}
-          {{#each phones}} <!--TODO allow for removing phone -->
-          {{> edit_phone}}
-          {{/each}}
-          {{#each addresses}} <!--TODO allow for removing address -->
-          {{> edit_address}}
-          {{/each}}
-          {{> edit_dropdown services_dropdown}}
-          {{> edit_dropdown accessibility_dropdown}}
-          {{> edit_languages languages}}
-          {{> edit_field short_desc}}
-          {{> edit_field description}}
-          {{> edit_hours hours}}
-          {{> edit_field transportation}}
-          {{> edit_field audience}}
-          {{> edit_field eligibility}}
-          {{> edit_field fees}}
-          {{> edit_field how_to_apply}}
-          {{> category_inputs category_specific_inputs}}
+          <!-- TODO make new location -->
         </div>
       </div>
     </div>
@@ -410,7 +414,6 @@
           {{> new_field short_desc}}
           {{> new_field description}}
           {{> edit_hours blank_dict}}
-          {{> new_field transportation}}
           {{> new_field audience}}
           {{> new_field eligibility}}
           {{> new_field fees}}

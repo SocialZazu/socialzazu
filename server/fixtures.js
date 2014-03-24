@@ -270,26 +270,22 @@ Meteor.startup(function() {
            lng=-122.446879
          )
         ],
-        "Sister Estela",
         {
         },
-        transportation=null,
         accessibility=[],
         languages=[],
+        [
+          Services.findOne({name:"Treatment Center"}._id)
+        ],
         phones=[
           make_phone('(415) 409-6003', null, 'voice')
         ],
-        internet_resource=make_internet(
-          'http://www.msjse.org',
-          'sisterestela@TheEpiphanyCenter.org'
-        ),
-        services=make_services(null, null, null, null)
-      ),
-      [sf_id],
-      [
-        Services.findOne({name:"Treatment Center"}._id)
-      ]
-    );
+        'http://www.msjse.org',
+        'sisterestela@TheEpiphanyCenter.org',
+        null, null, null, null,
+        [sf_id]
+      )
+    )
 
     _name = 'Homeless Prenatal';
     var hpp_id = Resources.insert(
@@ -311,97 +307,88 @@ Meteor.startup(function() {
              },
            }
          ],
-         service_poc: [
-           'Shona Baum',
-         ],
          hours:{
            m_f:{open_time:900, close_time:1700, day:'Mon-Fri'},
            sat:{open_time:1100, close_time:1700, day:'Sat'},
            sun:{closed:true, day:'Sun'}
          },
-         transportation:null,
          accessibility: [],
          languages: [],
          phones: [
            make_phone('(415) 546-6756', null, "voice")
          ],
-         internet_resource:make_internet('http://www.homelessprenatal.org',
-                                         'ShonaBaum@homelessprenatal.org'),
-         services: {
-           audience:null,
-           eligibility:null,
-           fees:null,
-           how_to_apply:null,
-         },
-       },
-       service_areas: [
-         sf_id
-       ],
-       sub_service_ids: [
-         Services.findOne({name:"Treatment Center"}._id)
-       ]
+         email:'ShonaBaum@homelessprenatal.org',
+         url:'http://www.homelessprenatal.org',
+         audience:null,
+         eligibility:null,
+         fees:null,
+         how_to_apply:null,
+         service_areas: [
+           sf_id
+         ],
+         sub_service_ids: [
+           Services.findOne({name:"Treatment Center"}._id)
+         ]
+       }
       }
     );
 
-    _name = 'San Francisco Marin Food Bank';
-    var sffb_id = Resources.insert(
-      {name:_name, updated_time:timestamp, name_route:make_name_route(_name),
-       locations: {
-         contacts: [make_contact('Sean Brooks', 'Director of Programs')],
-         description:"Our mission is to end hunger in San Francisco and Marin. It's a huge job that's only gotten harder as our community struggles with a prolonged period of economic distress and record numbers of people are pushed to the point of hunger.",
-         short_desc:'Food Bank in San Francisco and Marin',
-         address: [
-           {
-             street:"900 Pennsylvania Ave",
-             city:"San Francisco",
-             state:"CA",
-             zipcode:"94107",
-             type:"physical",
-             coordinates: {
-               lat:37.7544611,
-               lng:-122.39367900000002
-             },
-           },
-           {
-             street:"75 Digital Drive",
-             city:"Novato",
-             state:"CA",
-             zipcode:"94949",
-             type:"physical",
-             coordinates: {
-               lat:38.0719482,
-               lng:-122.5305377
-             }
-           }
-         ],
-         service_poc: [
-           'Sean Brooks',
-         ],
-         hours:{},
-         transportation:null,
-         accessibility: [],
-         languages: [],
-         phones: [
-           make_phone('(415)-282-1900', null, "voice"),
-           make_phone('(415)-883-1302', null, "voice")
-         ],
-         internet_resource:make_internet('http://www.sfmfoodbank.org/',
-                                         'lliang@sfmfoodbank.org'),
-         services: {
-           audience:null,
-           eligibility:null,
-           fees:null,
-           how_to_apply:null,
-         },
-       },
-       service_areas: [
-         sf_id, marin_id
-       ],
-       sub_service_ids: [
-         Services.findOne({name:"Food Pantry"})._id, Services.findOne({name:"Food Stamps"})._id, Services.findOne({name:"Home Meal Delivery"})._id
-       ]
-      }
-    );
+    // _name = 'San Francisco Marin Food Bank';
+    // var sffb_id = Resources.insert(
+    //   {name:_name, updated_time:timestamp, name_route:make_name_route(_name),
+    //    locations: {
+    //      contacts: [make_contact('Sean Brooks', 'Director of Programs')],
+    //      description:"Our mission is to end hunger in San Francisco and Marin. It's a huge job that's only gotten harder as our community struggles with a prolonged period of economic distress and record numbers of people are pushed to the point of hunger.",
+    //      short_desc:'Food Bank in San Francisco and Marin',
+    //      address: [
+    //        {
+    //          street:"900 Pennsylvania Ave",
+    //          city:"San Francisco",
+    //          state:"CA",
+    //          zipcode:"94107",
+    //          type:"physical",
+    //          coordinates: {
+    //            lat:37.7544611,
+    //            lng:-122.39367900000002
+    //          },
+    //        },
+    //        {
+    //          street:"75 Digital Drive",
+    //          city:"Novato",
+    //          state:"CA",
+    //          zipcode:"94949",
+    //          type:"physical",
+    //          coordinates: {
+    //            lat:38.0719482,
+    //            lng:-122.5305377
+    //          }
+    //        }
+    //      ],
+    //      hours:{},
+    //      transportation:null,
+    //      accessibility: [],
+    //      languages: [],
+    //      phones: [
+    //        make_phone('(415)-282-1900', null, "voice"),
+    //        make_phone('(415)-883-1302', null, "voice")
+    //      ],
+    //      internet_resource:make_internet('http://www.sfmfoodbank.org/',
+    //                                      'lliang@sfmfoodbank.org'),
+    //      services: {
+    //        audience:null,
+    //        eligibility:null,
+    //        fees:null,
+    //        how_to_apply:null,
+    //      },
+    //    },
+    //    service_areas: [
+    //      sf_id, marin_id
+    //    ],
+    //    sub_service_ids: [
+    //      Services.findOne({name:"Food Pantry"})._id, Services.findOne({name:"Food Stamps"})._id, Services.findOne({name:"Home Meal Delivery"})._id
+    //    ]
+    //   }
+    // );
 
     _name = 'Oakland Elizabeth House';
     var oakehouse_id = Resources.insert(
@@ -423,51 +410,43 @@ Meteor.startup(function() {
              },
            }
          ],
-         service_poc: [
-           'Kimberly Martinez',
-         ],
          hours:{},
-         transportation:null,
          accessibility: [],
          languages: [],
          phones: [
            make_phone('(510) 658-1380', null, "voice")
          ],
-         internet_resource:make_internet(
-           'http://www.oakehouse.org/',
-           'oakehouse@oakehouse.org'
-         ),
-         services: {
-           audience:null,
-           eligibility:null,
-           fees:null,
-           how_to_apply:null
-         },
-       },
-       service_areas: [
-         alameda_id
-       ],
-       sub_service_ids: [
-         Services.findOne({name:"Transitional Housing"})._id,
-         Services.findOne({name:"Domestic Violence"})._id,
-         Services.findOne({name:"Family Support"})._id
-       ]
+         url:'http://www.oakehouse.org/',
+         email:'oakehouse@oakehouse.org',
+         audience:null,
+         eligibility:null,
+         fees:null,
+         how_to_apply:null,
+         service_areas: [
+           alameda_id
+         ],
+         sub_service_ids: [
+           Services.findOne({name:"Transitional Housing"})._id,
+           Services.findOne({name:"Domestic Violence"})._id,
+           Services.findOne({name:"Family Support"})._id
+         ]
+       }
       }
-    );
+    )
 
     Services.update({_id:Services.findOne({name:"Treatment Center"})._id}, {
       $push:{resources:{$each: [hpp_id, epiphany_id]}},
       $set:{count:2}
     });
 
-    Services.update({_id:Services.findOne({name:"Food Pantry"})._id},
-                    {$push:{resources:sffb_id}, $set:{count:1}});
+    // Services.update({_id:Services.findOne({name:"Food Pantry"})._id},
+    //                 {$push:{resources:sffb_id}, $set:{count:1}});
 
-    Services.update({_id:Services.findOne({name:"Food Stamps"})._id}, {
-      $push:{resources:sffb_id}, $set:{count:1}});
+    // Services.update({_id:Services.findOne({name:"Food Stamps"})._id}, {
+    //   $push:{resources:sffb_id}, $set:{count:1}});
 
-    Services.update({_id:Services.findOne({name:"Home Meal Delivery"})._id}, {
-      $push:{resources:sffb_id}, $set:{count:1}});
+    // Services.update({_id:Services.findOne({name:"Home Meal Delivery"})._id}, {
+    //   $push:{resources:sffb_id}, $set:{count:1}});
 
 
     Services.update({_id:Services.findOne({name:"Transitional Housing"})._id}, {$push:{resources:oakehouse_id},

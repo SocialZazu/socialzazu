@@ -1,6 +1,3 @@
-ALL_REQUIRED_MSG = 'Error: Missing a required field (name, address, contact info, descriptions)'
-required_fields = ['name', 'address', 'contact_name', 'contact_title',
-                   'description', 'short_desc', 'email', 'phones'];
 MAX_RESOURCES = 15;
 
 Template.category_input.events({
@@ -390,7 +387,7 @@ Template.edit_resource.helpers({
   accessibility_dropdown: function() {
     var _all = ['blind', 'deaf', 'elevator', 'parking', 'ramp', 'restroom', 'wheelchair'];
     return {
-      list: this.locations.accessibility.map(function(value) {
+      list: this.accessibility.map(function(value) {
         return {id:value, value:value, remove_key:'remove_access_from_resource'}
       }),
       all: _all.map(function(value) {
@@ -404,7 +401,7 @@ Template.edit_resource.helpers({
   },
   addresses: function() {
     var i = -1;
-    return this.locations.address.map(function(address) {
+    return this.address.map(function(address) {
       i += 1;
       return {index:i, zipcode:address.zipcode,
               city:address.city, street:address.street};
@@ -412,7 +409,7 @@ Template.edit_resource.helpers({
   },
   audience: function() {
     return {
-      current: trim(this.locations.services.audience),
+      current: trim(this.audience),
       field: 'Audience'
     }
   },
@@ -423,7 +420,7 @@ Template.edit_resource.helpers({
     }
   },
   contacts: function() {
-    return this.locations.contacts.slice(0,1) //TODO: allow more contacts
+    return this.contacts.slice(0,1) //TODO: allow more contacts
   },
   contact_name: function() {
     return {
@@ -439,41 +436,47 @@ Template.edit_resource.helpers({
   },
   description: function() {
     return {
-      current: trim(this.locations.description),
+      current: trim(this.description),
       field: 'Description'
     }
   },
   eligibility: function() {
     return {
-      current: trim(this.locations.services.eligibility),
+      current: trim(this.eligibility),
       field: 'Eligibility'
     }
   },
   email: function() {
     return {
-      current: trim(this.locations.internet_resource.email),
+      current: trim(this.email),
       field: 'Email'
     }
   },
   fees: function() {
     return {
-      current: trim(this.locations.services.fees),
+      current: trim(this.fees),
       field: 'Fees'
     }
   },
   hours: function() {
-    return this.locations.hours;
+    return this.hours;
   },
   how_to_apply: function() {
     return {
-      current: trim(this.locations.services.how_to_apply),
+      current: trim(this.how_to_apply),
       field: 'How To Apply'
     }
   },
   languages: function() {
     return {
-      languages:this.locations.languages
+      languages:this.languages
     }
+  },
+  name_location: function() {
+    return this.name
+  },
+  locations: function() {
+    return this.locations
   },
   name: function() {
     return {
@@ -483,14 +486,14 @@ Template.edit_resource.helpers({
   },
   phones: function() {
     var i = -1;
-    return this.locations.phones.map(function(phone) {
+    return this.phones.map(function(phone) {
       i += 1;
       return {index:i, phone_number:phone.number, phone_hours:phone.hours};
     });
   },
   short_desc: function() {
     return {
-      current: trim(this.locations.short_desc),
+      current: trim(this.short_desc),
       field: 'Short Desc'
     }
   },
@@ -508,15 +511,9 @@ Template.edit_resource.helpers({
       field:"Categories"
     }
   },
-  transportation: function() {
-    return {
-      current: trim(this.locations.transportation),
-      field: 'Transportation'
-    }
-  },
   url: function() {
     return {
-      current: trim(this.locations.internet_resource.url),
+      current: trim(this.url),
       field: 'Website'
     }
   },
@@ -590,26 +587,21 @@ Template.new_field.helpers({
 Template.new_resource.events({
   'click #save_resource': function(e, tmpl) {
     Session.set('message', null);
-    var edits = collate_edits(true);
-    validate_edits(edits, true);
-
-    var message = Session.get('message');
-    if (!message || !(message.slice(0,5) == "Error")) {
-      Meteor.call('save_resource_edits',
-                  null, Meteor.userId(), edits,
-                  function(error, result) {
-                    if (!error & result['success']) {
-                      success_message_with_warning();
-                      Session.set('is_editing', false);
-                      Session.set('resource_id', result['resource_id']);
-                    } else {
-                      Session.set('message', 'Error: Eek, server mistake. We apologize');
-                    }
-                  }
-                 );
-    }
-  },
-
+    Meteor.call(
+      'save_resource_edits', null, Meteor.userId(), collate_edits(true), function(error, result) {
+        if (!error & !result['success']) {
+          Session.set('message', result['message']);
+        }
+        else if (!error & result['success']) {
+          Session.set('message', result['success']);
+          Session.set('is_editing', false);
+          Session.set('resource_id', result['resource_id']);
+        } else {
+          Session.set('message', 'Error: Eek, server mistake. We apologize');
+        }
+      }
+    );
+  }
 });
 
 Template.new_resource.helpers({
@@ -695,9 +687,6 @@ Template.new_resource.helpers({
       span_diff:9,
       field:"Categories"
     }
-  },
-  transportation: function() {
-    return 'Transportation'
   },
   url: function() {
     return 'Website'
@@ -804,7 +793,7 @@ var collate_edits = function(all_required) {
   var ret = {}
   var fields = ['Audience', 'Contact_Name', 'Contact_Title', 'Description',
                 'Short_Desc', 'Eligibility', 'Email', 'Fees', 'How_To_Apply',
-                'Name', 'Transportation', 'Website']
+                'Name', 'Website']
   var resource_id = Session.get('resource_id');
   ret['category_specific_inputs'] = collate_category_inputs(resource_id)
 
@@ -812,7 +801,7 @@ var collate_edits = function(all_required) {
     ret['sub_service_ids'] = Session.get('new_service');
     ret['accessibility'] = Session.get('new_access');
     ret['languages'] = Session.get('new_language');
-    ret['counties'] = [Session.get('county')._id]; //TODO: change to incorporate more counties
+    ret['county'] = Session.get('county')._id; //TODO: change to incorporate more counties with a dropdown
 
     var _new_specific_inputs = Session.get('new_specific_inputs')
     for (var key in _new_specific_inputs) {
@@ -913,10 +902,6 @@ is_editing_plus = function() {
   return Session.get('is_editing') || !Session.get('resource_id');
 }
 
-var is_placeholder_value = function(value, placeholder) {
-  return value == '' || value == placeholder
-}
-
 var obj_trim = function(obj, key) {
   var ret = obj[key] || {};
   ret['period'] = key;
@@ -988,77 +973,4 @@ var trim = function(current) {
     return "";
   }
   return current.trim();
-}
-
-var validate_address = function(addresses) {
-  for (var i = 0; i < addresses.length; i++) {
-    var address = addresses[i];
-    if (address['zipcode'] && !(is_placeholder_value(address['zipcode'], 'Zip')) && !(/^\d{5}$/.test(address['zipcode']))) {
-      return [false, 'Error: Zipcode malformed'];
-    }
-    //TODO: another clause to make sure that zipcode in county
-  }
-  return [true, ''];
-}
-
-var validate_edits = function(edits, all_required) {
-  var resource_id = Session.get('resource_id');
-  for (var key in edits) {
-    var val = edits[key];
-    if (!resource_id && !val && required_fields.indexOf(key) > -1) {
-      Session.set('message', ALL_REQUIRED_MSG);
-      return false;
-    }
-
-    if (key == 'sub_service_ids' && val && val.length == 0) {
-      Session.set('message', 'Error: Please add at least one category');
-      return false;
-    }
-
-    if (key == 'address') {
-      var address = validate_address(val);
-      if (!address[0]) {
-        Session.set('message', address[1]);
-        return false;
-      }
-    }
-
-    if (key == 'hours') {
-      var hours = validate_hours(val);
-      if (!hours[0]) {
-        Session.set('message', hours[1]);
-        delete edits['hours'] //can pass validation even if hours fails
-      }
-    }
-  }
-}
-
-var validate_hours = function(hours) {
-  for (var day in hours) {
-    var input = hours[day];
-    if (input.closed) {
-      continue;
-    }
-
-    //we want either both open and close to be real times OR
-    //we want both to be blank values.
-    var open_military = validate_time(input['open_time']);
-    var close_military = validate_time(input['close_time']);
-    if (open_military && close_military) {
-      if (close_military < open_military) {
-        return [false, 'Warning: ' + display_day(day) + "'s closing time is earlier than it's opening time. Not setting hours."];
-      }
-    } else if (!(is_placeholder_value(input['open_time'], 'Blank') && is_placeholder_value(input['close_time'], 'Blank'))) {
-      return [false, 'Warning: ' + display_day(day) + ' is not in correct military time. Not setting hours.'];
-    }
-  }
-  return [true, ''];
-}
-
-var validate_time = function(time) {
-  if (/^[0-2]\d[0-5]\d$/.test(time) && parseInt(time) < 2400) {
-    return time;
-  } else {
-    return false;
-  }
 }

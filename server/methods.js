@@ -84,25 +84,19 @@ Meteor.methods({
   },
 
   save_resource_edits: function(resource_id, user_id, edits) {
+    var failures = validate_edits(resource_id, edits)
+    if (failures.length == 1 && failures[0].key == 'all') {
+      return failures[0];
+    } else {
+      failures.forEach(function(failure) {
+        delete edits[failure.key];
+      });
+    }
+
     //record all of the edits in the resource and the changelog
     var timestamp = (new Date()).getTime();
 
     if (resource_id == null) { //new resource
-      var addresses = [];
-      edits['address'].forEach(function(address) {
-        var street = address['street'];
-        if (street != '' && street != 'Street') {
-          addresses.push(make_address(street=address['street'],
-                                      city=address['city'],
-                                      state='CA', //TODO: fix this when later
-                                      zipcode=address['zipcode'],
-                                      type="physical",
-                                      lat=null,
-                                      lng=null)
-                        )
-        }
-      });
-
       var phones = [];
       edits['phones'].forEach(function(phone) {
         var phone_number = phone['phone_number'];
@@ -116,6 +110,21 @@ Meteor.methods({
 
       var contacts=[make_contact(edits['contact_name'], edits['contact_title'])]
 
+      console.log(edits) //Did address get deleted if it wasn't kosher?
+      var addresses = [];
+      edits['address'].forEach(function(address) {
+        var street = address['street'];
+        if (street != '' && street != 'Street') {
+          addresses.push(make_address(street=address['street'],
+                                      city=address['city'],
+                                      state='CA', //TODO
+                                      zipcode=address['zipcode'],
+                                      lat=null,
+                                      lng=null)
+                        )
+        }
+      });
+
       var resource_id = make_resource(
         edits['name'], timestamp,
         make_location(
@@ -124,42 +133,29 @@ Meteor.methods({
           edits['description'],
           edits['short_desc'],
           addresses,
-          edits['contact_name'],
           edits['hours'],
-          edits['transportation'],
           edits['accessibility'],
           edits['languages'],
+          edits['sub_service_ids'],
           phones,
-          [make_internet(
-            edits['url'],
-            edits['email'])
-          ],
-          make_services(
-            edits['audience'],
-            edits['eligibility'],
-            edits['fees'],
-            edits['how_to_apply']
-          )
-        ),
-        edits['counties'], edits['sub_service_ids'], edits['category_specific_inputs']
-      )
+          edits['url'],
+          edits['email'],
+          edits['audience'],
+          edits['eligibility'],
+          edits['fees'],
+          edits['how_to_apply'],
+          edits['county'],
+          edits['category_specific_inputs']
+        )
+      );
       Services.update({_id:{$in:edits['sub_service_ids']}},
                       {$addToSet:{resources:resource_id}});
       Changes.insert({created_time:timestamp, target_resource_id:resource_id,
                       new_resource:true, editor_id:user_id});
-      return {"success":true, resource_id:resource_id}
+      failures.push({'resource_id':resource_id})
+      return failures;
     } else { //existing resource
       var resource = Resources.findOne({_id:resource_id});
-
-      var new_services = {};
-      services_fields.forEach(function(field) {
-        new_services[field] = edits_or_current(edits[field], resource.locations.services, field);
-      });
-
-      var new_internets = {};
-      internet_fields.forEach(function(field) {
-        new_internets[field] = edits_or_current(edits[field], resource.locations.internet_resource, field);
-      });
 
       var new_contacts = {};
       if (resource.locations.contacts && resource.locations.contacts[0]) {
@@ -167,12 +163,6 @@ Meteor.methods({
           var key = field.slice(8);
           new_contacts[key] = edits_or_current(edits[field], resource.locations.contacts[0], key);
         });
-      }
-
-      if ('contact_name' in edits) {
-        var new_poc = [edits['contact_name']];
-      } else {
-        var new_poc = resource.locations.service_poc;
       }
 
       var new_locations = {};
@@ -323,8 +313,95 @@ var update_resource = function(oldvals, newvals, editor_id, resource_id, ts, fie
   }
 }
 
-var location_fields = ['short_desc', 'description', 'transportation'];
-var services_fields = ['audience', 'eligibility', 'fees', 'how_to_apply'];
-var internet_fields = ['email', 'url'];
+var location_fields = ['short_desc', 'description', 'audience',
+                       'eligibility', 'fees', 'how_to_apply',
+                       'email', 'url', ];
 var contact_fields  = ['contact_title', 'contact_name'];
 var special_fields  = ['phones', 'address', 'hours'];
+var required_fields = ['name', 'address', 'contact_name', 'contact_title',
+                       'description', 'short_desc', 'email', 'phones'];
+var all_required_msg = 'Error: Missing a required field (name, address, contact info, descriptions)'
+
+var is_placeholder_value = function(value, placeholder) {
+  return value == '' || value == placeholder
+}
+
+var validate_address = function(addresses) {
+  for (var i = 0; i < addresses.length; i++) {
+    var address = addresses[i];
+    if (address['zipcode'] && !(is_placeholder_value(address['zipcode'], 'Zip')) && !(/^\d{5}$/.test(address['zipcode']))) {
+      return {'success':false, message:'Warning: Zipcode malformed, not updating address', key:'address'};
+    }
+    //TODO: another clause to make sure that zipcode in county
+  }
+  return {'success':true}
+}
+
+
+var validate_edits = function(resource_id, edits) {
+  var failures = [];
+  for (var key in edits) {
+    var val = edits[key];
+    if (!resource_id && !val && required_fields.indexOf(key) > -1) {
+      return [{'success':false, 'message':all_required_msg, 'key':'all'}]
+    }
+
+    if (key == 'sub_service_ids' && val && val.length == 0) {
+      failures.push({
+        'success':false,
+        'message':'Warning: Please include at least one category',
+        'key':'sub_service_ids'});
+    }
+
+    if (key == 'address') {
+      var address = validate_address(val);
+      if (!address['success']) {
+        failures.push(address);
+        continue
+      }
+    }
+
+    if (key == 'hours') {
+      var hours = validate_hours(val);
+      if (!hours['success']) {
+        failures.push(hours);
+        continue
+      }
+    }
+  }
+  return failures;
+}
+
+var validate_hours = function(hours) {
+  for (var day in hours) {
+    var input = hours[day];
+    if (input.closed) {
+      continue;
+    }
+
+    //we want either both open and close to be real times OR
+    //we want both to be blank values.
+    var open_military = validate_time(input['open_time']);
+    var close_military = validate_time(input['close_time']);
+    if (open_military && close_military) {
+      if (close_military < open_military) {
+        return {'success':false,
+                'message':"Warning: " + display_day(day) + "'s closing time is earlier than it's opening time. Not setting hours.",
+                'key':'hours'}
+      }
+    } else if (!(is_placeholder_value(input['open_time'], 'Blank') && is_placeholder_value(input['close_time'], 'Blank'))) {
+      return {'success':false,
+              'message':"Warning: " + display_day(day) + ' is not in correct military time. Not setting hours.',
+              'key':'hours'}
+    }
+  }
+  return {'success':true}
+}
+
+var validate_time = function(time) {
+  if (/^[0-2]\d[0-5]\d$/.test(time) && parseInt(time) < 2400) {
+    return time;
+  } else {
+    return false;
+  }
+}
