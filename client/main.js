@@ -11,48 +11,40 @@ Deps.autorun(function() {
 
   //Editor
   Meteor.subscribe(
-    'resources_from_id',
-    Session.get('resource_id')
+    'locations_from_resource_id_and_county',
+    Session.get('resource_id'),
+    Session.get('county')
   );
+
+  Meteor.subscribe(
+    'locations_need_editing',
+    Session.get('county')
+  );
+
   Meteor.subscribe(
     'open_flags',
     Session.get('county')
   );
 
   //Home
-  if (Session.get('display_services') && Session.get('display_services').length == SIDEBAR_NUM) {
-    Meteor.subscribe(
-      'resources_from_services',
-      Session.get('display_services'),
-      Session.get('county'),
-      function() {
+  Meteor.subscribe(
+    'locations_from_services',
+    Session.get('display_services'),
+    Session.get('county'),
+    function() {
+      if (Session.get('display_services') && Session.get('display_services').length == SIDEBAR_NUM) {
         var service_ids = Session.get('display_services').map(
           function(service) {return service._id}
         );
 
         map.remove_all_markers();
 
-        Resources.find(
-          {locations:
-           {$elemMatch:
-            {sub_service_ids:{$in:service_ids},
-             service_area:Session.get('county')._id
-            }
-           }
-          },
-          {locations:
-           {$elemMatch:
-            {sub_service_ids:{$in:service_ids},
-             service_area:Session.get('county')._id
-            }
-           }
-          }).forEach(
-          function(resource) {
-            map.add_marker_from_resource(resource, Session.get('county')._id)
-          }
-        )
+        Locations.find(
+          {service_area:Session.get('county')._id,
+           sub_service_ids:{$in:service_ids}}).forEach(function(location) {
+             map.add_marker_from_location(location);
+           });
       }
-    )
-  }
-
+    }
+  )
 });

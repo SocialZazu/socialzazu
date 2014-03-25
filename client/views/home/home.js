@@ -8,7 +8,7 @@ Template.flag_control.events({
     flag = $(tmpl.find('i'));
     if (!flag.hasClass('fa-flag')) {
       if (Meteor.userId()) {
-        Meteor.call("flag_resource", this._id, Meteor.userId());
+        Meteor.call("flag_location", this._id, Meteor.userId());
       } else {
         session_var_push('user_flags', this._id);
       }
@@ -18,7 +18,7 @@ Template.flag_control.events({
 
 Template.flag_control.helpers({
   flag_on: function() {
-    var flag = Flags.findOne({open:true, user_id:Meteor.userId(), resource_id:this._id});
+    var flag = Flags.findOne({open:true, user_id:Meteor.userId(), location_id:this._id});
     if (flag || Session.get('user_flags').indexOf(this._id) > -1) {
       return "fa fa-flag red"
     } else {
@@ -64,6 +64,8 @@ Template.home.helpers({
 Template.home.rendered = function() {
   var i = -1;
   if (!Session.get('display_services') || Session.get('display_services').length < SIDEBAR_NUM) {
+    console.log('tds')
+    console.log(this.data.services)
     Session.set(
       'display_services',
       this.data.services.map(

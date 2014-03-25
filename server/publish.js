@@ -27,27 +27,44 @@ Meteor.publish('open_flags', function(county) {
   return Flags.find({open:true, counties:county._id})
 });
 
-Meteor.publish('resources_from_id', function(id) {
+Meteor.publish('resource_from_id', function(id) {
   return Resources.find({_id:id});
+});
+
+Meteor.publish('locations_from_resource_id_and_county', function(resource_id, county) {
+  if (!county) {
+    return [];
+  } else {
+    return Locations.find({resource_id:resource_id, county:county._id});
+  }
+});
+
+Meteor.publish('locations_need_editing', function(county) {
+  if (!county) {
+    return [];
+  }
+  return Locations.find({needs_edit:true, service_area:county._id});
 });
 
 Meteor.publish('search_resources_from_county', function(county) {
   if (!county) {
     return [];
   }
-  return Resources.find({locations:{$elemMatch:{service_area:county._id}}}, {_id:true, name:true, name_route:true}); //TODO: make this field limiting work
+  var resource_ids = Locations.find({service_area:county._id}).map(function(location) {
+    return location.resource_id;
+  });
+  return Resources.find({_id:{$in:resource_ids}},
+                        {sort:{name:1}});
 });
 
-Meteor.publish('resources_from_services', function(services, county) {
+Meteor.publish('locations_from_services', function(services, county) {
   if (!services || services.length == 0 || !county) {
     return [];
   }
   service_ids = services.map(function(service) {
     return service._id;
   });
-  return Resources.find({locations:{$elemMatch:{
-    sub_service_ids:{$in:service_ids},
-    service_area:county}}});
+  return Locations.find({service_area:county._id, sub_service_ids:{$in:service_ids}});
 });
 
 Meteor.publish('service_name_route', function(name_route) {
@@ -62,7 +79,7 @@ Meteor.publish('sub_services', function() {
   return Services.find({parents:{$exists:true, $ne:null}});
 });
 
-//change to incorporate some metric
+//TODO: change to incorporate some metric
 Meteor.publish('top_services', function() {
   return Services.find({});
 });

@@ -2,7 +2,10 @@ Handlebars.registerHelper("capitalize", function(str) {
   return capitalize(str);
 });
 
-Handlebars.registerHelper("is_editing", function() {
+Handlebars.registerHelper("is_editing", function(id) {
+  if (id) {
+    return Session.get('is_editing') == id;
+  }
   return is_editing_plus();
 });
 

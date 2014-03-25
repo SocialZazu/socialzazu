@@ -6,35 +6,27 @@ map = {
   markerIDs: [],
   marker_services: [],
 
-  add_marker_from_resource: function(resource, county_id) {
-    var locations = resource.locations;
-    for (var i = 0; i < locations.length; i++) {
-      var location = locations[i];
-      if (county_id && location.service_area != county_id) {
-        //Should already have been filtered out, but just in case.
-        continue
-      }
-      var address = location.address[0]; //Only one (may change in future)
-      if (address.coordinates && typeof address.coordinates.lat !== 'undefined' &&
-          typeof address.coordinates.lng !== 'undefined') {
-        var exists = this.marker_exists(resource._id, i);
-        if (!exists[0]) {
-          var icon = get_icon_for_resource(resource, i);
-          this.add_new_marker({
-            id:resource._id, position:i, title:resource.name,
-            lat:address.coordinates.lat,
-            lng:address.coordinates.lng,
-            services:resource.sub_service_ids,
-            icon:icon});
-        } else {
-          this.add_existing_marker(resource);
-          break;
-        }
+  add_marker_from_location: function(location) {
+    var address = location.address[0]; //Only one (may change in future)
+    if (address.coordinates && typeof address.coordinates.lat !== 'undefined' &&
+        typeof address.coordinates.lng !== 'undefined') {
+
+      if (!this.marker_exists(location._id)[0]) {
+        var icon = get_icon_for_location(location);
+        this.add_new_marker({
+          id:location._id, title:location.name,
+          lat:address.coordinates.lat,
+          lng:address.coordinates.lng,
+          services:location.sub_service_ids,
+          icon:icon});
+      } else {
+        this.add_existing_marker(location);
       }
     }
   },
 
   add_map_marker_in_view: function(marker) {
+    console.log(marker);
     var bounds = this.gmap.getBounds();
     if (bounds && bounds.contains(marker.position)) {
       session_var_push('map_markers_in_view', marker.id);
@@ -53,36 +45,30 @@ map = {
 
     this.latLngs.push(gLatLng);
     this.markers.push(gMarker);
-    this.markerIDs.push(marker.id + '_' + marker.position.toString());
+    this.markerIDs.push(marker.id);
     this.marker_services.push(marker.services);
     this.add_map_marker_in_view(gMarker);
     google.maps.event.addListener(gMarker, 'click', function() {
-      resource = Resources.findOne({_id:gMarker.id});
-      Session.set('display_resource', resource);
+      location = Locations.findOne({_id:gMarker.id});
+      Session.set('display_location', location);
       pan_to(gMarker.position);
     });
     return gMarker;
   },
 
-  add_existing_marker: function(resource) {
-    var i = 0;
-    var exists = this.marker_exists(resource._id, i);
-    while(exists[0]) {
+  add_existing_marker: function(location) {
+    var exists = this.marker_exists(location._id);
+    if (exits[0]) {
       this.markers[exists[1]].setMap(this.gmap);
       this.add_map_marker_in_view(this.markers[exists[1]]);
-      i += 1;
-      exists = this.marker_exists(resource._id, i);
     }
   },
 
-  remove_marker: function(resource) {
-    var i = 0;
-    var exists = this.marker_exists(resource._id, i);
-    while(exists[0]) {
+  remove_marker: function(location) {
+    var exists = this.marker_exists(location._id);
+    if (exists[0]) {
       this.markers[exists[1]].setMap(null);
-      session_var_splice('map_markers_in_view', resource._id);
-      i += 1;
-      exists = this.marker_exists(resource._id, i);
+      session_var_splice('map_markers_in_view', location._id);
     }
   },
 
@@ -106,20 +92,9 @@ map = {
     this.latLngs = [];
   },
 
-  calc_bounds: function() {
-    var bounds = new google.maps.LatLngBounds();
-    for (var i = 0, latLngLength = this.latLngs.length; i < latLngLength; i++) {
-      bounds.extend(this.latLngs[i]);
-    }
-    return bounds;
-  },
-
-  marker_exists: function(id, position) {
-    var index = this.markerIDs.indexOf(id + '_' + position.toString());
-    if (index != -1) {
-      return [true, index];
-    }
-    return [false, null];
+  marker_exists: function(id) {
+    var index = this.markerIDs.indexOf(id);
+    return [index > -1, index];
   },
 
   // initialize the map
@@ -190,10 +165,10 @@ geocode_check = function(resource) {
   }
 }
 
-var get_icon_for_resource = function(resource, i) {
+var get_icon_for_location = function(location) {
   var display_services = Session.get('display_services');
   var icon = false;
-  resource.locations[i].sub_service_ids.forEach(function(service_id) {
+  location.sub_service_ids.forEach(function(service_id) {
     display_services.forEach(function(service) {
       if (service._id == service_id) {
         icon = '/gflags/' + icon_from_color(service.color);

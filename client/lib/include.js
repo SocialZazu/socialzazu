@@ -14,7 +14,7 @@ Template.find_me_map.events({
   }
 });
 
-category_specific_inputs = function(services, values) {
+category_specific_inputs = function(services, values, location_id) {
   var original_values = values;
   var input_reasons = {};
   var inputs_in_order = [];
@@ -34,6 +34,7 @@ category_specific_inputs = function(services, values) {
     Inputs.find({_id:{$in:find_inputs}}).forEach(function(input) {
       input.values = get_input_values(input.field, original_values);
       input_reasons[input._id] = [service_input.name];
+      input.location_id = location_id;
       if (input.type == "checkbox") {checks.push(input)}
       else if (input.type == "number") {numbers.push(input)}
       else if (input.type == "dropdown") {dropdowns.push(input)}
@@ -86,12 +87,13 @@ get_service_names_with_parent_inputs = function(service_ids) {
 
 session_var_splice_obj = function(key, field, value) {
   var vals = Session.get(key);
-  if (vals && field in vals) {
-    var index = vals[field].indexOf(value);
-    if (index > -1) {
-      vals[field].splice(index, 1);
-      Session.set(key, vals)
-    }
+  if (!(field in vals)) {
+    vals[field] = [];
+  }
+  var index = vals[field].indexOf(value);
+  if (index > -1) {
+    vals[field].splice(index, 1);
+    Session.set(key, vals)
   }
 }
 
@@ -103,6 +105,20 @@ session_var_splice = function(session_key, value) {
     Session.set(session_key, vals);
   }
 };
+
+session_var_set_obj = function(key, field, value) {
+  var vals = Session.get(key);
+  vals[field] = value
+  Session.set(key, vals);
+}
+
+session_var_unset_obj = function(key, field) {
+  var vals = Session.get(key);
+  if (field in vals) {
+    delete vals[field];
+  }
+  Session.set(key, vals);
+}
 
 session_var_push_obj = function(key, field, value) {
   var vals = Session.get(key);

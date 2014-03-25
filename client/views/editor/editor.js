@@ -4,9 +4,15 @@ Template.category_input.events({
   'click .category_checkbox': function(e, tmpl) {
     var target = $(e.target);
     var checked = target.prop('checked');
-    var resource_id = Session.get('resource_id');
-    if (resource_id) {
-      Meteor.call('check_category_input_to_resource', resource_id, this.field, checked);
+    var location_id = Session.get('is_editing');
+    if (location_id) {
+      Meteor.call('check_category_input_to_location', location_id, this.field, checked);
+    } else {
+      var inputs = Session.get('track_inputs')
+      var category_specific_inputs = inputs['category_specific_inputs'] || {};
+      category_specific_inputs[this.field] = checked;
+      inputs['category_specific_inputs'] = category_specific_inputs;
+      Session.set('track_inputs', inputs);
     }
   },
 });
@@ -16,13 +22,14 @@ Template.category_input.helpers({
     var field = this.field;
     return {
       list: this.values.map(function(value) {
-        return {id:value, field:field, value:value, remove_key:'remove_category_input_from_resource'}
+        return {id:value, field:field, value:value, remove_key:'remove_category_input_from_location'}
       }),
       all: this.list.map(function(value) {
-        return {id:value, field:field, value:value, remove_key:'remove_category_input_from_resource'}
+        return {id:value, field:field, value:value, remove_key:'remove_category_input_from_location'}
       }),
-      reactive_save_key: 'add_category_input_to_resource',
+      reactive_save_key: 'add_category_input_to_location',
       field:field,
+      location_id:this.location_id
     }
   },
   checked: function() {
@@ -51,7 +58,8 @@ Template.category_input.helpers({
       width:"90%",
       current:this.values,
       id:this.field,
-      class:"category_number"
+      is_category_specific_input:true,
+      location_id:this.location_id
     }
   },
   value: function() {
@@ -59,35 +67,20 @@ Template.category_input.helpers({
   },
 });
 
-Template.category_inputs.helpers({
-  has_inputs: function() {
-    return true; //TODO: make correct.
-  },
-  inputs: function() {
-    return category_specific_inputs(this.services, this.values);
-  }
-});
-
 Template.editor.created = function() {
   Session.set('message', null);
-  Session.set('new_service', []);
-  Session.set('new_access', []);
-  Session.set('new_language', []);
-  Session.set('new_specific_inputs', {})
+  Session.set('track_inputs', {});
   Session.set('is_editing', false);
   Session.set('category_id', null);
   Session.set('resource_id', null);
+  Session.set('keyup_timers', {});
   Session.set('skip_resource_page', 0);
   Session.set('weekday_hours_the_same', true);
 }
 
 Template.editor.destroyed = function() {
   Session.set('message', null);
-  Session.set('new_service', null);
-  Session.set('new_access', null);
-  Session.set('new_language', null);
-  Session.set('new_specific_inputs', null);
-  Session.set('is_editing', null);
+  Session.set('is_editing', false);
   Session.set('category_id', null);
   Session.set('resource_id', null);
 }
@@ -126,8 +119,33 @@ Template.editor.helpers({
   has_open_flags: function() {
     return Flags.find({open:true}).count() > 0
   },
+  info_from_edit: function() {
+    var timestamp = this.created_time || this.updated_time || '';
+    return {
+      created_time: timestamp,
+      resource: this,
+      type: 'edit'
+    }
+  },
+  locations: function() {
+    var index = 0;
+    var resource_locations = this.locations
+    return Locations.find({_id:{$in:resource_locations}}).map(function(location) {
+      index += 1;
+      if (index == resource_locations.length) {
+        location.last_location = true;
+      }
+      return location;
+    });
+  },
   max_resources: function() {
     return MAX_RESOURCES.toString();
+  },
+  name_resource: function() {
+    return {
+      current: trim(this.name),
+      field: 'Resource Name'
+    }
   },
   page_start_edit: function() {
     return 1 + Session.get('skip_resource_page')*MAX_RESOURCES
@@ -149,6 +167,14 @@ Template.editor.helpers({
   },
   resource: function() {
     return Resources.findOne({_id:Session.get('resource_id')});
+  },
+  resources: function() {
+    var resource_ids = Locations.find({needs_edit:true, service_area:Session.get('county')._id}).map(function(location) {
+      return location.resource_id;
+    });
+    return Resources.find(
+      {_id:{$in:resource_ids}},
+      {limit:MAX_RESOURCES, skip:Session.get('skip_resource_page')*MAX_RESOURCES});
   },
   show_edit_resource: function() {
     return Session.get('resource_id') !== null;
@@ -181,42 +207,42 @@ Template.edit_address.helpers({
     return {
       current:current,
       id:key + '_' + this.index,
-      width:width
+      width:width,
+      location_id:this.id
     }
   },
 });
 
 Template.edit_buttons.events({
-  'click #save_resource': function(e, tmpl) {
+  'click #save_location': function(e, tmpl) {
     //save edits made
     Session.set('message', null);
     var edits = collate_edits(false);
-    validate_edits(edits, false);
-
-    var message = Session.get('message');
-    if (!message || !(message.slice(0,5) == "Error")) {
-      Meteor.call('save_resource_edits',
-                  Session.get('resource_id'), Meteor.userId(), edits,
-                  function(error, result) {
-                    if (!error && result['success']) {
-                      success_message_with_warning();
-                      Session.set('is_editing', false);
-                    } else {
-                      Session.set('message', 'Error: Eek, server mistake. We apologize');
-                    }
-                  }
-                 );
-    }
+    Meteor.call(
+      'save_location_edits',
+      Session.get('is_editing'), Meteor.userId(), edits,
+      function(error, result) {
+        if (!error && result['success']) {
+          success_message_with_warning();
+          Session.set('is_editing', false);
+          Session.set('track_inputs', {});
+        } else {
+          Session.set('message', 'Error: Eek, server mistake. We apologize');
+        }
+      }
+    );
   },
   'click #cancel_edits': function(e, tmpl) {
     //cancel edits made, revert back div mode
+    Session.set('track_inputs', {});
     Session.set('message', null);
     Session.set('is_editing', false);
   },
-  'click #edit_resource': function(e, tmpl) {
-    //enter div mode
+  'click #edit_location': function(e, tmpl) {
+    //enter edit mode
+    Session.set('track_inputs', {});
     Session.set('message', null);
-    Session.set('is_editing', true);
+    Session.set('is_editing', this.id);
   },
   'click #mark_complete': function(e, tmpl) {
     //close all flags with this resource's _id
@@ -226,18 +252,13 @@ Template.edit_buttons.events({
                 function(e, result) {
                   if (!e) {
                     Session.set('message', 'Success: Marked as complete. Thanks!');
+                    Session.set('track_inputs', {});
                     Session.set('is_editing', false);
                     Session.set('resource_id', null);
                   }
                 }
                );
   }
-});
-
-Template.edit_buttons.helpers({
-  is_editing: function() {
-    return Session.get('is_editing');
-  },
 });
 
 Template.edit_dropdown.events({
@@ -277,12 +298,13 @@ Template.edit_dropdown.helpers({
 
 Template.edit_field.helpers({
   field_class: function() {
-    return get_field_class('input');
+    return get_field_class('input', this.id);
   },
   toggle_info: function() {
     return {
       current: this.current,
-      id: this.field.trim().split(' ').join('_')
+      id: this.field.trim().split(' ').join('_'),
+      location_id: this.id
     }
   }
 });
@@ -316,9 +338,12 @@ Template.edit_hours.helpers({
     return time_placeholder(this.close_time);
   },
   edit_hours_subfields: function() {
-    var _this = this;
+    var hours = this.hours || {};
+    var location_id = this.id;
     return days_abbr.map(function(day) {
-      return obj_trim(_this, day);
+      var obj = obj_trim(hours, day);
+      obj['location_id'] = location_id;
+      return obj;
     })
   },
   is_monday: function() {
@@ -342,18 +367,188 @@ Template.edit_languages.events({
   'click #add_language': function(e, tmpl) {
     var new_language = $(tmpl.find('#language_input')).val();
     if (new_language && new_language.trim() !== '') {
-      save_reactive_data('add_language_to_resource', null, new_language);
+      save_reactive_data('add_language_to_location', 'languages', new_language);
     }
   },
   'click .remove_language': function(e, tmpl) {
     var language = $(tmpl.find('.remove_language')).attr('name');
-    save_reactive_data('remove_language_from_resource', null, language);
+    save_reactive_data('remove_language_from_location', 'languages', language);
   },
 });
 
 Template.edit_languages.helpers({
   languages: function() {
     return this.languages;
+  },
+});
+
+Template.edit_location.helpers({
+  accessibility_dropdown: function() {
+    var _all = ['blind', 'deaf', 'elevator', 'parking', 'ramp', 'restroom', 'wheelchair'];
+    var list = this.accessibility || [];
+    return {
+      list: list.map(function(value) {
+        return {id:value, value:value, remove_key:'remove_access_from_location'}
+      }),
+      all: _all.map(function(value) {
+        return {id:value, value:value, remove_key:'remove_access_from_location'}
+      }),
+      reactive_save_key: 'add_access_to_location',
+      span_size:3,
+      span_diff:9,
+      field:"Accessibility",
+      location_id:this._id
+    }
+  },
+  addresses: function() {
+    var location_id = this._id;
+    var i = -1;
+    return this.address.map(function(address) {
+      i += 1;
+      return {zipcode:address.zipcode, city:address.city,
+              street:address.street, index:i,
+              id:location_id};
+    });
+  },
+  audience: function() {
+    return {
+      current: trim(this.audience),
+      field: 'Audience',
+      id: this._id
+    }
+  },
+  contacts: function() { //TODO: allow more contacts
+    var contacts = this.contacts;
+    if (contacts.length == 0) {
+      return [{name:'', title:'', _id:this._id}];
+    } else {
+      return contacts;
+    }
+  },
+  contact_name: function() {
+    return {
+      current: trim(this.name),
+      field: 'Contact Name',
+      id: this._id
+    }
+  },
+  contact_title: function() {
+    return {
+      current: trim(this.title),
+      field: 'Contact Title',
+      id: this._id
+    }
+  },
+  description: function() {
+    return {
+      current: trim(this.description),
+      field: 'Description',
+      id: this._id
+    }
+  },
+  eligibility: function() {
+    return {
+      current: trim(this.eligibility),
+      field: 'Eligibility',
+      id: this._id
+    }
+  },
+  email: function() {
+    return {
+      current: trim(this.email),
+      field: 'Email',
+      id: this._id
+    }
+  },
+  fees: function() {
+    return {
+      current: trim(this.fees),
+      field: 'Fees',
+      id: this._id
+    }
+  },
+  hours: function() {
+    return {
+      hours: this.hours,
+      id: this._id
+    }
+  },
+  how_to_apply: function() {
+    return {
+      current: trim(this.how_to_apply),
+      field: 'How To Apply',
+      id: this._id
+    }
+  },
+  inputs: function() {
+    values = this.category_specific_inputs;
+    services = get_service_names_with_parent_inputs(this.sub_service_ids)
+    return category_specific_inputs(services, values, this._id);
+  },
+  languages: function() {
+    return {
+      languages:this.languages,
+      location_id: this._id
+    }
+  },
+  location_id: function() {
+    return {id: this._id};
+  },
+  more_name_info: function() {
+    var mni = this.more_name_info;
+    if (!mni) {
+      return null;
+    }
+    return {
+      current: trim(this.mni),
+      field: 'More Name Info',
+      id: this._id
+    }
+  },
+  name_location: function() {
+    return {
+      current: trim(this.name),
+      field: 'Location Name',
+      id: this._id
+    }
+  },
+  phones: function() {
+    var location_id = this._id;
+    var i = -1;
+    return this.phones.map(function(phone) {
+      i += 1;
+      return {phone_number:phone.number, phone_hours:phone.hours,
+              index:i, id:location_id};
+    });
+  },
+  short_desc: function() {
+    return {
+      current: trim(this.short_desc),
+      field: 'Short Desc',
+      id: this._id
+    }
+  },
+  services_dropdown: function() {
+    return {
+      list: Services.find({_id:{$in:this.sub_service_ids}}, {sort:{name:1}}).map(function(service) {
+        return {id:service._id, value:service.name, remove_key:'remove_service_from_location'}
+      }),
+      all: Services.find({parents:{$exists:true, $ne:null}}, {sort:{name:1}}).map(function(service) {
+        return {id:service._id, value:service.name, remove_key:'remove_service_from_location'}
+      }),
+      reactive_save_key: 'add_service_to_location',
+      span_size:3,
+      span_diff:9,
+      field:"Categories",
+      location_id:this._id
+    }
+  },
+  url: function() {
+    return {
+      current: trim(this.url),
+      field: 'Website',
+      id: this._id
+    }
   },
 });
 
@@ -379,143 +574,8 @@ Template.edit_phone.helpers({
     return {
       current:trim(current),
       id:key + '_' + this.index,
-      width:width
-    }
-  },
-});
-
-Template.edit_resource.helpers({
-  accessibility_dropdown: function() {
-    var _all = ['blind', 'deaf', 'elevator', 'parking', 'ramp', 'restroom', 'wheelchair'];
-    return {
-      list: this.accessibility.map(function(value) {
-        return {id:value, value:value, remove_key:'remove_access_from_resource'}
-      }),
-      all: _all.map(function(value) {
-        return {id:value, value:value, remove_key:'remove_access_from_resource'}
-      }),
-      reactive_save_key: 'add_access_to_resource',
-      span_size:3,
-      span_diff:9,
-      field:"Accessibility"
-    }
-  },
-  addresses: function() {
-    var i = -1;
-    return this.address.map(function(address) {
-      i += 1;
-      return {index:i, zipcode:address.zipcode,
-              city:address.city, street:address.street};
-    });
-  },
-  audience: function() {
-    return {
-      current: trim(this.audience),
-      field: 'Audience'
-    }
-  },
-  category_specific_inputs: function() {
-    return {
-      values: this.category_specific_inputs,
-      services: get_service_names_with_parent_inputs(this.sub_service_ids)
-    }
-  },
-  contacts: function() {
-    return this.contacts.slice(0,1) //TODO: allow more contacts
-  },
-  contact_name: function() {
-    return {
-      current: trim(this.name),
-      field: 'Contact Name'
-    }
-  },
-  contact_title: function() {
-    return {
-      current: trim(this.title),
-      field: 'Contact Title'
-    }
-  },
-  description: function() {
-    return {
-      current: trim(this.description),
-      field: 'Description'
-    }
-  },
-  eligibility: function() {
-    return {
-      current: trim(this.eligibility),
-      field: 'Eligibility'
-    }
-  },
-  email: function() {
-    return {
-      current: trim(this.email),
-      field: 'Email'
-    }
-  },
-  fees: function() {
-    return {
-      current: trim(this.fees),
-      field: 'Fees'
-    }
-  },
-  hours: function() {
-    return this.hours;
-  },
-  how_to_apply: function() {
-    return {
-      current: trim(this.how_to_apply),
-      field: 'How To Apply'
-    }
-  },
-  languages: function() {
-    return {
-      languages:this.languages
-    }
-  },
-  name_location: function() {
-    return this.name
-  },
-  locations: function() {
-    return this.locations
-  },
-  name: function() {
-    return {
-      current: trim(this.name),
-      field: 'Name'
-    }
-  },
-  phones: function() {
-    var i = -1;
-    return this.phones.map(function(phone) {
-      i += 1;
-      return {index:i, phone_number:phone.number, phone_hours:phone.hours};
-    });
-  },
-  short_desc: function() {
-    return {
-      current: trim(this.short_desc),
-      field: 'Short Desc'
-    }
-  },
-  services_dropdown: function() {
-    return {
-      list: Services.find({_id:{$in:this.sub_service_ids}}, {sort:{name:1}}).map(function(service) {
-        return {id:service._id, value:service.name, remove_key:'remove_service_from_resource'}
-      }),
-      all: Services.find({parents:{$exists:true, $ne:null}}, {sort:{name:1}}).map(function(service) {
-        return {id:service._id, value:service.name, remove_key:'remove_service_from_resource'}
-      }),
-      reactive_save_key: 'add_service_to_resource',
-      span_size:3,
-      span_diff:9,
-      field:"Categories"
-    }
-  },
-  url: function() {
-    return {
-      current: trim(this.url),
-      field: 'Website'
+      width:width,
+      location_id: this.id
     }
   },
 });
@@ -540,7 +600,43 @@ Template.edit_search_resources.rendered = function() {
   $('.search-query.tt-hint').width('inherit');
 }
 
-Template.is_editing_toggle.helpers({
+Template.edit_toggle.events({
+  'keyup input': function(e, tmpl) {
+    var current = this.current;
+    var id = this.id.toLowerCase();
+    var value = $(tmpl.find('input')).val();
+    var is_category_specific = this.is_category_specific_input;
+
+    var timers = Session.get('keyup_timers');
+    if (id in timers) {
+      window.clearTimeout(timers[id]);
+    }
+    var timer = window.setTimeout(function() {
+      if (is_category_specific) {
+        var inputs = Session.get('track_inputs')
+        var category_specific_inputs = inputs['category_specific_inputs'] || {};
+        if (value == current && id in category_specific_inputs) {
+          delete category_specific_inputs[id];
+          inputs['category_specific_inputs'] = category_specific_inputs;
+          Session.set('track_inputs', inputs);
+        } else if (value != current) {
+          category_specific_inputs[id] = value;
+          inputs['category_specific_inputs'] = category_specific_inputs;
+          Session.set('track_inputs', inputs);
+        }
+      } else if (value == current) {
+        session_var_unset_obj('track_inputs', id);
+      } else {
+        session_var_set_obj('track_inputs', id, value);
+      }
+      session_var_set_obj('keyup_timers', id, null);
+    }, 1000);
+    timers[id] = timer;
+    Session.set('keyup_timers', timers);
+  }
+});
+
+Template.edit_toggle.helpers({
   width: function() {
     var width = this.width || "92%"
     return width;
@@ -565,41 +661,43 @@ Template.message.helpers({
   }
 });
 
-Template.needs_edit.helpers({
-  info_from_edit: function() {
-    var timestamp = this.created_time || this.updated_time || '';
-    return {
-      created_time: timestamp,
-      resource: this,
-      type: 'edit'
+Template.new_field.events({
+  'keyup input': function(e, tmpl) {
+    var id = this.id;
+    var value = $(tmpl.find('input')).val();
+    if (value == '') {
+      e.preventDefault();
+      return;
     }
-  },
-  resources: function() {
-    return Resources.find(
-      {needs_edit:true,
-       locations:{$elemMatch:{service_area:Session.get('county')._id}}},
-      {sort:{name:1}, limit:MAX_RESOURCES, skip:Session.get('skip_resource_page')*MAX_RESOURCES});
-  },
-});
-
-Template.new_field.helpers({
-  id: function() {
-    return this.trim().split(' ').join('_') + '_input';
-  },
-});
+    var timers = Session.get('keyup_timers');
+    if (id in timers) {
+      window.clearTimeout(timers[id]);
+    }
+    var timer = window.setTimeout(function() {
+      session_var_set_obj('keyup_timers', id, null);
+      session_var_set_obj('track_inputs', id, value)
+    }, 1000);
+    timers[id] = timer;
+    Session.set('keyup_timers', timers);
+  }
+})
 
 Template.new_resource.events({
   'click #save_resource': function(e, tmpl) {
+    var edits = collate_edits(true);
     Session.set('message', null);
     Meteor.call(
-      'save_resource_edits', null, Meteor.userId(), collate_edits(true), function(error, result) {
-        if (!error & !result['success']) {
+      'save_location_edits', null, Meteor.userId(), edits,
+      function(error, result) {
+        console.log(result);
+        if (!result['success']) {
           Session.set('message', result['message']);
-        }
-        else if (!error & result['success']) {
+        } else if (result['success']) {
           Session.set('message', result['success']);
           Session.set('is_editing', false);
-          Session.set('resource_id', result['resource_id']);
+          // Change later to have it come up as the resource in editing
+          // Session.set('is_editing', result['location_id']);
+          // Session.set('resource_id', result['resource_id']);
         } else {
           Session.set('message', 'Error: Eek, server mistake. We apologize');
         }
@@ -611,21 +709,25 @@ Template.new_resource.events({
 Template.new_resource.helpers({
   accessibility_dropdown: function() {
     var _all = ['blind', 'deaf', 'elevator', 'parking', 'ramp', 'restroom', 'wheelchair'];
+    var list = Session.get('track_inputs')['accessibility'] || [];
     return {
-      list: Session.get('new_access').map(function(value) {
-        return {id:value, value:value, remove_key: 'remove_access_from_resource'};
+      list: list.map(function(value) {
+        return {id:value, value:value, remove_key: 'remove_access_from_location'};
       }),
       all: _all.map(function(value) {
-        return {id:value, value:value, remove_key: 'remove_access_from_resource'};
+        return {id:value, value:value, remove_key: 'remove_access_from_location'};
       }),
-      reactive_save_key: 'add_access_to_resource',
+      reactive_save_key: 'add_access_to_location',
       span_size:3,
       span_diff:9,
-      field: "Accessibility"
+      field:"Accessibility"
     }
   },
   audience: function() {
-    return 'Audience'
+    return {
+      field:'Audience',
+      id:'audience'
+    }
   },
   blank_address: function() {
     return {index:0, zipcode:'', city:'', street:''}
@@ -634,66 +736,81 @@ Template.new_resource.helpers({
     return {};
   },
   languages: function() {
-    return {languages: Session.get('new_language')}
+    var languages = Session.get('track_inputs')['languages'] || [];
+    return {languages: languages};
   },
   blank_phone: function() {
     return {index:0, phone_number:'', phone_hours:''};
   },
-  category_specific_inputs: function() {
-    return {
-      values: Session.get('new_specific_inputs'),
-      services: get_service_names_with_parent_inputs(Session.get('new_service'))
-    }
+  inputs: function() {
+    var track_inputs = Session.get('track_inputs');
+    values = track_inputs['category_specific_inputs'] || {};
+    services = track_inputs['categories'] || [];
+    services = get_service_names_with_parent_inputs(services);
+    return category_specific_inputs(services, values, null);
   },
   contact_name: function() {
-    return 'Contact Name'
+    return {
+      field:'Contact Name',
+      id:'contact_name'
+    }
   },
   contact_title: function() {
-    return 'Contact Title'
+    return {
+      field:'Contact Title',
+      id:'contact_title'
+    }
   },
   description: function() {
-    return 'Description'
+    return {
+      field:'Description',
+      id:'description'
+    }
   },
   eligibility: function() {
-    return 'Eligibility'
+    return {
+      field:'Eligibility',
+      id:'eligibility'
+    }
   },
   email: function() {
-    return 'Email'
+    return {
+      field:'Email',
+      id:'email'
+    }
   },
   fees: function() {
-    return 'Fees'
+    return {field:'Fees', id:'fees'}
   },
   how_to_apply: function() {
-    return 'How To Apply'
+    return {field:'How To Apply', id:'how_to_apply'}
   },
   name_location: function() {
-    return 'Name Location'
+    return {field:'Name Location', id:'location_name'}
   },
   name_resource: function() {
-    return 'Name Resource'
-  },
-  phone: function() {
-    return 'Phone'
+    return {field:'Name Resource', id:'resource_name'}
   },
   short_desc: function() {
-    return 'Short Desc'
+    return {field:'Short Desc', id:'short_desc'}
   },
   services_dropdown: function() {
+    var list = Session.get('track_inputs')['categories'] || [];
     return {
-      list: Services.find({_id:{$in:Session.get('new_service')}}, {sort:{name:1}}).map(function(service) {
-        return {id:service._id, value:service.name, remove_key:'remove_service_from_resource'}
+      list: Services.find({_id:{$in:list}}, {sort:{name:1}}).map(function(service) {
+        return {id:service._id, value:service.name, remove_key:'remove_service_from_location'}
       }),
       all: Services.find({parents:{$exists:true, $ne:null}}, {sort:{name:1}}).map(function(service) {
-        return {id:service._id, value:service.name, remove_key: 'remove_service_from_resource'};
+        return {id:service._id, value:service.name, remove_key: 'remove_service_from_location'};
       }),
-      reactive_save_key: 'add_service_to_resource',
+      reactive_save_key: 'add_service_to_location',
       span_size:3,
       span_diff:9,
       field:"Categories"
     }
   },
   url: function() {
-    return 'Website'
+    return {field:'Website', id:'url'}
   },
 });
 
@@ -731,106 +848,21 @@ Template.open_flags.helpers({
   },
 });
 
-var collate_address_edits = function() {
-  return collate_class_edits($('.edit_address'), ['street', 'city', 'zipcode']);
-}
-
-var collate_category_inputs = function(resource_id) {
-  var ret = {};
-  if (!resource_id) {
-    var checkboxes = $('.category_checkbox');
-    checkboxes.each(function(ch) {
-      var checkbox = checkboxes[ch];
-      var id = checkbox.getAttribute('id').split('_input')[0];
-      var checked = checkbox.checked;
-      ret[id] = checked;
-    });
-  }
-  var numbers = $('.category_number');
-  numbers.each(function(n) {
-    var number = numbers[n];
-    var id = number.getAttribute('id').split('_input')[0];
-    var value = number.value;
-    if (value && value != '') {
-      ret[id] = value;
-    }
-  });
-  return ret;
-}
-
-var collate_class_edits = function(class_elems, fields) {
-  var ret = [];
-  for (var i = 0; i < class_elems.length; i++) {
-    var index = class_elems[i].getAttribute('index');
-    var change = {}
-    var has_edit = false;
-    fields.forEach(function(field) {
-      var edit = collate_edit(field + '_' + index);
-      if (edit) {
-        change[field] = edit;
-        has_edit = true;
-      }
-    });
-    if (has_edit) {
-      change['index'] = index;
-      ret.push(change);
-    }
-  }
-  return ret;
-}
-
-var collate_edit = function(field) {
-  var id = '#' + field + '_input';
-  val = $(id).val();
-  if (!val) {
-    return null;
-  }
-  val = val.trim();
-  if (val == '') {
-    return null;
-  } else {
-    return val;
-  }
-}
-
 var collate_edits = function(all_required) {
-  var ret = {}
-  var fields = ['Audience', 'Contact_Name', 'Contact_Title', 'Description',
-                'Short_Desc', 'Eligibility', 'Email', 'Fees', 'How_To_Apply',
-                'Name', 'Website']
-  var resource_id = Session.get('resource_id');
-  ret['category_specific_inputs'] = collate_category_inputs(resource_id)
+  var location_id = Session.get('is_editing');
+  var edits = Session.get('track_inputs');
 
-  if (!resource_id) { //new resource ... add service_ids
-    ret['sub_service_ids'] = Session.get('new_service');
-    ret['accessibility'] = Session.get('new_access');
-    ret['languages'] = Session.get('new_language');
-    ret['county'] = Session.get('county')._id; //TODO: change to incorporate more counties with a dropdown
-
-    var _new_specific_inputs = Session.get('new_specific_inputs')
-    for (var key in _new_specific_inputs) {
-      ret['category_specific_inputs'][key] = _new_specific_inputs[key];
-    }
-  }
-  fields.forEach(function(field) {
-    var edit = collate_edit(field);
-    var lower = field.toLowerCase();
-    if (all_required) {
-      ret[lower] = edit;
-    } else if (edit) { //if editing existing resource, only want changes
-      ret[lower] = edit;
-    }
-  });
-
-  if ('website' in ret) { //would rather use url on backend.
-    ret['url'] = ret['website']
-    delete ret['website']
+  if (!location_id) {
+    edits['county'] = Session.get('county')._id;
   }
 
-  ret['hours'] = collate_hours_edits()
-  ret['address'] = collate_address_edits();
-  ret['phones'] = collate_phone_edits();
-  return ret;
+  if ('website' in edits) { //would rather use url on backend.
+    edits['url'] = edits['website']
+    delete edits['website']
+  }
+
+  edits['hours'] = collate_hours_edits()
+  return edits;
 }
 
 var _collate_hours_time = function(day, time) {
@@ -855,10 +887,6 @@ var collate_hours_edits = function() {
     }
   });
   return ret;
-}
-
-var collate_phone_edits = function() {
-  return collate_class_edits($('.edit_phone'), ['phone_number', 'phone_hours']);
 }
 
 var display_day = function(day) {
@@ -895,15 +923,15 @@ var get_category_input_ids = function(services) {
   return input_ids;
 }
 
-var get_field_class = function(type) {
-  if (is_editing_plus()) {
+var get_field_class = function(type, id) {
+  if ((id && Session.get('location_id') == id) || is_editing_plus()) {
     return 'field_' + type;
   }
   return '';
 }
 
 is_editing_plus = function() {
-  return Session.get('is_editing') || !Session.get('resource_id');
+  return Session.get('is_editing') == true || !Session.get('resource_id');
 }
 
 var obj_trim = function(obj, key) {
@@ -913,16 +941,32 @@ var obj_trim = function(obj, key) {
 }
 
 var _save_reactive_data_category_input = function(instr, field, value) {
-  var resource_id = Session.get('resource_id');
-  if (resource_id) {
-    Meteor.call(instr, resource_id, field, value);
+  var location_id = Session.get('is_editing');
+  if (location_id) {
+    Meteor.call(instr, location_id, field, value);
   } else {
+    var inputs = Session.get('track_inputs');
+    var category_specific_inputs = inputs['category_specific_inputs'] || {};
+    var field_inputs = category_specific_inputs[field] || [];
+
     var parts = instr.split('_');
     var type_change = parts[0];
     if (type_change == 'remove') {
-      session_var_splice_obj('new_specific_inputs', field, value);
+      var index = field_inputs.indexOf(value);
+      if (index > -1) {
+        field_inputs.splice(index, 1);
+        category_specific_inputs[field] = field_inputs;
+        inputs['category_specific_inputs'] = category_specific_inputs;
+        Session.set('track_inputs', inputs);
+      }
     } else if (type_change == 'add') {
-      session_var_push_obj('new_specific_inputs', field, value);
+      var index = field_inputs.indexOf(value);
+      if (index == -1) {
+        field_inputs.push(value);
+        category_specific_inputs[field] = field_inputs;
+        inputs['category_specific_inputs'] = category_specific_inputs;
+        Session.set('track_inputs', inputs);
+      }
     }
   }
 }
@@ -932,17 +976,17 @@ var save_reactive_data = function(instr, field, value) {
     _save_reactive_data_category_input(instr, field, value);
     return;
   }
-  var resource_id = Session.get('resource_id');
-  if (resource_id) {
-    Meteor.call(instr, resource_id, value);
+
+  var location_id = Session.get('is_editing');
+  if (location_id) {
+    Meteor.call(instr, location_id, value);
   } else {
     var parts = instr.split('_');
-    var session_key = 'new_' + parts[1];
-    var type_change = parts[0];
-    if (type_change == 'remove') {
-      session_var_splice(session_key, value);
-    } else if (type_change == 'add') {
-      session_var_push(session_key, value);
+    var field = field.toLowerCase();
+    if (parts[0] == 'remove') {
+      session_var_splice_obj('track_inputs', field, value);
+    } else if (parts[0] == 'add') {
+      session_var_push_obj('track_inputs', field, value);
     }
   }
 }
@@ -969,7 +1013,12 @@ var time_placeholder = function(time) {
 }
 
 var total_needs_edit_count = function() {
-  return Resources.find({needs_edit:true}).count();
+  if (!Session.get('county')) {
+    return 0;
+  } else {
+    return Locations.find(
+      {needs_edit:true, service_area:Session.get('county')._id}).count();
+  }
 }
 
 var trim = function(current) {
