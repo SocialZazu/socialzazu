@@ -32,9 +32,23 @@ Deps.autorun(function() {
 
         map.remove_all_markers();
 
-        Resources.find({sub_service_ids:{$in:service_ids}, service_areas:Session.get('county')._id}).forEach(
+        Resources.find(
+          {locations:
+           {$elemMatch:
+            {sub_service_ids:{$in:service_ids},
+             service_area:Session.get('county')._id
+            }
+           }
+          },
+          {locations:
+           {$elemMatch:
+            {sub_service_ids:{$in:service_ids},
+             service_area:Session.get('county')._id
+            }
+           }
+          }).forEach(
           function(resource) {
-            map.add_marker_from_resource(resource)
+            map.add_marker_from_resource(resource, Session.get('county')._id)
           }
         )
       }

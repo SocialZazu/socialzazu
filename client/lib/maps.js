@@ -6,19 +6,24 @@ map = {
   markerIDs: [],
   marker_services: [],
 
-  add_marker_from_resource: function(resource) {
-    var addresses = resource.locations.address;
-    for (var i = 0; i < addresses.length; i++) {
-      var adrs = addresses[i];
-      if (adrs.coordinates && typeof adrs.coordinates.lat !== 'undefined' &&
-          typeof adrs.coordinates.lng !== 'undefined') {
+  add_marker_from_resource: function(resource, county_id) {
+    var locations = resource.locations;
+    for (var i = 0; i < locations.length; i++) {
+      var location = locations[i];
+      if (county_id && location.service_area != county_id) {
+        //Should already have been filtered out, but just in case.
+        continue
+      }
+      var address = location.address[0]; //Only one (may change in future)
+      if (address.coordinates && typeof address.coordinates.lat !== 'undefined' &&
+          typeof address.coordinates.lng !== 'undefined') {
         var exists = this.marker_exists(resource._id, i);
         if (!exists[0]) {
-          var icon = get_icon_for_resource(resource);
+          var icon = get_icon_for_resource(resource, i);
           this.add_new_marker({
             id:resource._id, position:i, title:resource.name,
-            lat:adrs.coordinates.lat,
-            lng:adrs.coordinates.lng,
+            lat:address.coordinates.lat,
+            lng:address.coordinates.lng,
             services:resource.sub_service_ids,
             icon:icon});
         } else {
@@ -185,10 +190,10 @@ geocode_check = function(resource) {
   }
 }
 
-var get_icon_for_resource = function(resource) {
+var get_icon_for_resource = function(resource, i) {
   var display_services = Session.get('display_services');
   var icon = false;
-  resource.sub_service_ids.forEach(function(service_id) {
+  resource.locations[i].sub_service_ids.forEach(function(service_id) {
     display_services.forEach(function(service) {
       if (service._id == service_id) {
         icon = '/gflags/' + icon_from_color(service.color);

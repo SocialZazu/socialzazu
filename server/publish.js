@@ -35,7 +35,7 @@ Meteor.publish('search_resources_from_county', function(county) {
   if (!county) {
     return [];
   }
-  return Resources.find({service_areas:county._id}, {_id:true, name:true, name_route:true});
+  return Resources.find({locations:{$elemMatch:{service_area:county._id}}}, {_id:true, name:true, name_route:true}); //TODO: make this field limiting work
 });
 
 Meteor.publish('resources_from_services', function(services, county) {
@@ -45,7 +45,9 @@ Meteor.publish('resources_from_services', function(services, county) {
   service_ids = services.map(function(service) {
     return service._id;
   });
-  return Resources.find({sub_service_ids:{$in:service_ids}, service_areas:county._id});
+  return Resources.find({locations:{$elemMatch:{
+    sub_service_ids:{$in:service_ids},
+    service_area:county}}});
 });
 
 Meteor.publish('service_name_route', function(name_route) {

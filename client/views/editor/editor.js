@@ -141,6 +141,7 @@ Template.editor.helpers({
   resource_datums: function() {
     return {
       datums: Resources.find().map(function(resource) {
+        //TODO: include a way to search by resource locations
         return {value:resource.name, name_route:resource._id}
       }),
       placeholder:"Search Resource to Edit"
@@ -574,7 +575,10 @@ Template.needs_edit.helpers({
     }
   },
   resources: function() {
-    return Resources.find({needs_edit:true, service_areas:Session.get('county')._id}, {sort:{name:1}, limit:MAX_RESOURCES, skip:Session.get('skip_resource_page')*MAX_RESOURCES});
+    return Resources.find(
+      {needs_edit:true,
+       locations:{$elemMatch:{service_area:Session.get('county')._id}}},
+      {sort:{name:1}, limit:MAX_RESOURCES, skip:Session.get('skip_resource_page')*MAX_RESOURCES});
   },
 });
 
