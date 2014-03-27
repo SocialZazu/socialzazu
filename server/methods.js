@@ -11,7 +11,7 @@ Meteor.methods({
   add_category_input_to_location: function(location_id, field, value) {
     var update_query = {};
     update_query['category_specific_inputs.' + field] = value;
-    Locations.update({_id:location_id}, {$set:update_query});
+    Locations.update({_id:location_id}, {$addToSet:update_query});
   },
 
   add_language_to_location: function(location_id, language) {
@@ -78,7 +78,6 @@ Meteor.methods({
   },
 
   save_location_edits: function(location_id, user_id, edits) {
-    //TODO: fix to use new location architecture
     var failures = validate_edits(location_id, edits)
     if (failures.length == 1 && failures[0].key == 'kill') {
       return failures[0];
@@ -122,51 +121,51 @@ Meteor.methods({
                       new_location:true, editor_id:user_id});
 
       return {'resource_id':resource_id, 'location_id':location_id,
-              success:"Thanks! Got it"}
+              success:"Thanks! Got it", failures:failures}
     } else { //existing resource
       var location = Locations.findOne({_id:location_id});
+      var update_obj = {};
 
       for (var field in edits) {
+        var value = edits[field];
+
         if (field == 'hours') {
           var current = location.hours;
-          var newvals = hours_adjusted_values(current, edits[field]);
+          var newvals = hours_adjusted_values(current, value);
           if (Object.keys(newvals).length > 0) {
             update_location(current, newvals, user_id, location_id, timestamp, 'hours', 'hours');
+            continue
           }
         }
 
-        var update_obj = {}; //TODO: make everything one big change like this one
-
-        // if (field
-        for (field in new_locations) {
-          var value = new_locations[field];
-          if (value !== resource.locations[field]) {
-            resource_field_change(timestamp, resource_id, field, resource.locations[field],
-                                  value, user_id);
-            update_obj['locations.' + field] = value;
+        if (field == 'category_specific_inputs') {
+          update_obj['category_specific_inputs'] = location.category_specific_inputs;
+          for (var input in value) {
+            update_obj['category_specific_inputs'][input] = value[input];
           }
+        } else if (field == 'location_name') {
+          update_obj['name'] = value;
+        } else if (field.slice(0,7) == 'contact') {
+          update_obj['contacts'] = location.contacts;
+          update_obj['contacts'][0][field.slice(8)] = value;
+        } else if (field.slice(0,5) == 'phone') {
+          var parts = field.split('_');
+          update_obj['phones'] = location.phones;
+          update_obj['phones'][parts[2]][parts[1]] = value;
+        } else if (field == 'street_0' || field == 'city_0' || field == 'zipcode_0') { //TODO: update geo
+          update_obj['address'] = location.address;
+          update_obj['address'][0][field.slice(0,-2)] = value;
+        } else {
+          update_obj[field] = value;
         }
-        for (field in new_names) {
-          var value = new_names[field]
-          if (value !== resource[field]) {
-            resource_field_change(timestamp, resource_id, field, resource[field], value, user_id);
-            update_obj[field] = value;
-          }
-        }
-        for (field in edits['category_specific_inputs']) {
-          var value = edits['category_specific_inputs'][field];
-          if (!resource.category_specific_inputs || value !== resource.category_specific_inputs[field]) {
-            if (resource.category_specific_inputs) {var oldval = resource.category_specific_inputs[field];}
-            else {var oldval = null;}
-            resource_field_change(timestamp, resource_id, field, oldval, value, user_id);
-            update_obj['category_specific_inputs.' + field] = value;
-          }
-        }
-        if (Object.keys(update_obj).length > 0) {
-          set_update_resource_obj(resource_id, update_obj);
-        }
-        return {"success":true}
       }
+
+      console.log(update_obj);
+      if (Object.keys(update_obj).length > 0) {
+        set_update_location_obj(location_id, update_obj);
+        location_field_change(timestamp, location_id, null, null, update_obj, user_id);
+      }
+      return {"success":true, failures:failures}
     }
   }
 });
@@ -270,7 +269,7 @@ var validate_edits = function(location_id, edits) {
 
   if ('zipcode_0' in edits) {
     var val = edits['zipcode_0'];
-    if (val != '' && val != 'Zip' && !(/^\d{5}$/.test(edits['zipcode_0']))) {
+    if (!(/^\d{5}$/.test(val))) {
       failures.push({'success':false, message:'Warning: Zipcode malformed, not updating address', key:'zipcode_0'});
     }
   }
@@ -298,12 +297,12 @@ var validate_hours = function(hours) {
     if (open_military && close_military) {
       if (close_military < open_military) {
         return {'success':false,
-                'message':"Warning: " + display_day(day) + "'s closing time is earlier than it's opening time. Not setting hours.",
+                'message':"Warning: " + capitalize(day) + "'s closing time is earlier than it's opening time. Not setting hours.",
                 'key':'hours'}
       }
     } else if (!(is_placeholder_value(input['open_time'], 'Blank') && is_placeholder_value(input['close_time'], 'Blank'))) {
       return {'success':false,
-              'message':"Warning: " + display_day(day) + ' is not in correct military time. Not setting hours.',
+              'message':"Warning: " + capitalize(day) + ' is not in correct military time. Not setting hours.',
               'key':'hours'}
     }
   }

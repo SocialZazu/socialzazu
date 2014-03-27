@@ -3,7 +3,7 @@ Meteor.publish('all_users', function() {
 });
 
 Meteor.publish('counties', function() {
-  return Counties.find();
+  return Counties.find({location_count:{$gt:15}}, {$sort:{location_count:-1}});
 });
 
 Meteor.publish('flags_from_user', function(user_id, county) {

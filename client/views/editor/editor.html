@@ -90,13 +90,15 @@
             {{#if show_edit_resource}}
               {{#with resource}}
                 {{> edit_field name_resource}}
-                <hr>
+                <hr style="style-two">
                 <div class="row-fluid" style="overflow-y:scroll; height:530px; margin-top:10px">
                   {{#each locations}}
+                    {{#isolate}}
                     {{> edit_location}}
                     {{#unless last_location}}
                     <hr class="style-two">
                     {{/unless}}
+                    {{/isolate}}
                   {{/each}}
                     <!-- TODO make new location -->
                {{/with}}
@@ -138,24 +140,24 @@
   <div class="row-fluid">
     {{#if is_editing id}}
     <div class="span3">
-      <button type="button" class="btn btn-small left" id="cancel_edits">Cancel</button>
+      <button type="button" class="btn btn-small left cancel_edits">Cancel</button>
     </div>
     <div class="span6">
-      {{> message}}
+      {{> message location_id}}
     </div>
     <div class="span3">
-      <button type="button" class="btn btn-small right" id="save_location">Save Location</button>
+      <button type="button" class="btn btn-small right save_location">Save Location</button>
     </div>
     {{else}}
     <div class="span3">
-      <button type="button" class="btn btn-small left" id="edit_location">Edit Location</button>
+      <button type="button" class="btn btn-small left edit_location">Edit Location</button>
     </div>
     <div class="span6">
       {{> message}}
     </div>
   </div>
     <div class="span3">
-      <button type="button" class="btn btn-small right" id="mark_complete">Looks Good</button>
+      <button type="button" class="btn btn-small right mark_complete">Looks Good</button>
     </div>
     {{/if}}
   </div>
@@ -223,7 +225,7 @@
       {{#if is_monday}}
       <div class="row-fluid">
         <div class="span4">
-          <input {{checked_hours_same}} type="checkbox" id="weekday_hours_checkbox" style="height:20px">
+          <input {{checked_hours_same}} type="checkbox" class="weekday_hours_checkbox" style="height:20px">
         </div>
         <div class="span8">
           M-F hours same
