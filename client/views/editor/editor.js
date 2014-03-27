@@ -1,4 +1,5 @@
 MAX_RESOURCES = 15;
+TOTAL_NEEDS_EDIT = null;
 
 Template.category_input.events({
   'click .category_checkbox': function(e, tmpl) {
@@ -1012,12 +1013,22 @@ var time_placeholder = function(time) {
   return st;
 }
 
+
 var total_needs_edit_count = function() {
   if (!Session.get('county')) {
     return 0;
   } else {
-    return Locations.find(
-      {needs_edit:true, service_area:Session.get('county')._id}).count();
+    var locations = Locations.find(
+      {
+        needs_edit:true, service_area:Session.get('county')._id,
+      },
+      {
+        fields:{resource_id:true}
+      }).fetch()
+    var distinct_resources = _.uniq(locations, false, function(location) {
+      return location.resource_id
+    });
+    return distinct_resources.length;
   }
 }
 
