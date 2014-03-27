@@ -29,8 +29,8 @@ Template.flag_control.helpers({
 
 Template.home.created = function() {
   Session.set('map_markers_in_view', []);
-  Session.set('resources_from_services', []);
-  Session.set('display_resource', null);
+  Session.set('locations_from_services', []);
+  Session.set('display_location', null);
   Session.set('display_services', []); //all in sidebar
   Session.set('visible_services', []); //the ones shown on map
   Session.set('init_pan_to_county', null);
@@ -38,16 +38,16 @@ Template.home.created = function() {
 
 Template.home.destroyed = function() {
   Session.set('map_markers_in_view', []);
-  Session.set('resources_from_services', []);
+  Session.set('locations_from_services', []);
 }
 
 Template.home.helpers({
-  resource_datums: function() {
+  location_datums: function() {
     return {
-      datums: Resources.find().map(function(resource) {
-        return {value:resource.name, _id:resource._id}
+      datums: Locations.find().map(function(location) {
+        return {value:location.name, _id:location._id}
       }),
-      placeholder: "Search Resource to Show"
+      placeholder: "Search Location to Show"
     }
   },
   service_datums: function() {
@@ -93,7 +93,7 @@ Template.home.rendered = function() {
     }
 }
 
-Template.home_search_resources.rendered = function() {
+Template.search_locations.rendered = function() {
   var data = this.data.datums;
   var datums = new Bloodhound({
     datumTokenizer: function(d) { return Bloodhound.tokenizers.whitespace(d.value); },
@@ -102,19 +102,19 @@ Template.home_search_resources.rendered = function() {
   });
   datums.initialize();
 
-  $('#search_resources_field').outerWidth($('#display_home').width() - 54)
-  $('#search_resources_field').typeahead(null, {
+  $('#search_locations_field').outerWidth($('#display_home').width() - 54)
+  $('#search_locations_field').typeahead(null, {
     displayKey: 'value',
     source: datums.ttAdapter()
   }).on('typeahead:selected', function(event, datum) {
-    var resource = Resources.findOne({_id:datum._id});
-    if (resource) {
-      var address = resource.locations.address[0];
+    var location = Locations.findOne({_id:datum._id});
+    if (location) {
+      var address = location.address[0];
       if (address) {
         var coords = address.coordinates;
         pan_to(new google.maps.LatLng(coords.lat, coords.lng));
       }
-      Session.set('display_resource', resource)
+      Session.set('display_location', location)
     }
   });
 };
@@ -126,9 +126,9 @@ Template.map_home.rendered = function() {
 
     google.maps.event.addListener(map.gmap, 'bounds_changed', function() {
       var markers_in_bounds = map.markers_in_bounds();
-      var display_resource = Session.get('display_resource');
-      if (display_resource && markers_in_bounds.indexOf(display_resource._id) == -1) {
-        Session.set('display_resource', null);
+      var display_location = Session.get('display_location');
+      if (display_location && markers_in_bounds.indexOf(display_location._id) == -1) {
+        Session.set('display_location', null);
       }
       Session.set('map_markers_in_view', map.markers_in_bounds());
     });
@@ -142,7 +142,7 @@ Template.map_home.destroyed = function() {
   Session.set('map', false);
 };
 
-Template.resource_inputs.helpers({
+Template.location_inputs.helpers({
   fields: function() {
     return Object.keys(this).sort();
   },
@@ -161,15 +161,15 @@ Template.resource_inputs.helpers({
   }
 });
 
-Template.resource_list.helpers({
+Template.location_list.helpers({
   has_elems: function() {
     return this.list.length > 0;
   }
 });
 
-Template.resource_well.helpers({
+Template.location_well.helpers({
   accessibility: function() {
-    var access = this.locations.accessibility;
+    var access = this.accessibility;
     if (is_non_null(access)) {
       return {
         list: access,
@@ -180,23 +180,22 @@ Template.resource_well.helpers({
     }
   },
   address: function() {
-    return this.locations.address;
+    return this.address;
   },
   contact: function() {
-    var loc = this.locations;
     return {
-      name:loc.contacts.name,
-      title:loc.contacts.title,
-      phones:loc.phones,
-      url:loc.internet_resource.url,
-      email:loc.internet_resource.email
+      name:this.contacts.name,
+      title:this.contacts.title,
+      phones:this.phones,
+      url:this.url,
+      email:this.email
     }
   },
   hours: function() {
-    return this.locations.hours
+    return this.hours
   },
   languages: function() {
-    var languages = this.locations.languages;
+    var languages = this.languages;
     if (is_non_null(languages)) {
       return {
         list: languages,
@@ -207,15 +206,15 @@ Template.resource_well.helpers({
     }
   },
   short_desc: function() {
-    return this.locations.short_desc || 'No Short Description given';
+    return this.short_desc || 'No Short Description given';
   },
   single_inputs: function() {
-    var ret = get_values_from_fields(this.locations.services, ['how_to_apply', 'audience', 'eligibility', 'fees']);
+    var ret = get_values_from_fields(this, ['how_to_apply', 'audience', 'eligibility', 'fees']);
     if ('how_to_apply' in ret) {
       ret['apply'] = ret['how_to_apply'];
       delete ret['how_to_apply'];
     }
-    var transport = this.locations.transportation;
+    var transport = this.transportation;
     if (is_non_null(transport)) {
       ret['transport'] = transport;
     }
@@ -238,7 +237,7 @@ Template.resource_well.helpers({
   },
 });
 
-Template.resource_hours.helpers({
+Template.location_hours.helpers({
   day_of_week: function() {
     var ret = [];
     for (var i = 0; i < days_abbr.length; i++) {
@@ -340,26 +339,26 @@ Template.services_sidebar.rendered = function() {
   $('.search-query.tt-hint').width('inherit');
 }
 
-Template.show_map_resources.helpers({
-  has_map_resources: function() {
+Template.show_map_locations.helpers({
+  has_map_locations: function() {
     return Session.get('map_markers_in_view').length > 0;
   },
-  map_resources: function() {
+  map_locations: function() {
     var ret = [];
-    var display_resource = Session.get('display_resource');
+    var display_location = Session.get('display_location');
     var display_services = Session.get('display_services');
     var visible_services = Session.get('visible_services');
-    if (display_resource) {
-      var resource_id = display_resource._id;
-      ret.push(display_resource);
+    if (display_location) {
+      var location_id = display_location._id;
+      ret.push(display_location);
     } else {
-      var resource_id = "blank_id";
+      var location_id = "blank_id";
     }
-    Resources.find({_id:{$in:Session.get('map_markers_in_view'), $ne:resource_id}}).forEach(function(resource) {
-      var services = resource.sub_service_ids;
+    Locations.find({_id:{$in:Session.get('map_markers_in_view'), $ne:location_id}}).forEach(function(location) {
+      var services = location.sub_service_ids;
       for (var i = 0; i < display_services.length; i++) {
-        if (visible_services.indexOf(display_services[i]._id) > -1 && resource.sub_service_ids.indexOf(display_services[i]._id) > -1) {
-              ret.push(resource);
+        if (visible_services.indexOf(display_services[i]._id) > -1 && location.sub_service_ids.indexOf(display_services[i]._id) > -1) {
+              ret.push(location);
               break;
         }
       }
@@ -392,13 +391,13 @@ var add_all_selected = function() {
   });
 }
 
-var add_existing_marker = function(resource) {
-  map.add_existing_marker(resource);
+var add_existing_marker = function(location) {
+  map.add_existing_marker(location);
 };
 
 var adjust_map_display = function(service_id, f) {
-  Resources.find({sub_service_ids:service_id}).forEach(function(resource) {
-    f(resource);
+  Locations.find({sub_service_ids:service_id}).forEach(function(location) {
+    f(location);
   });
 };
 
@@ -430,8 +429,8 @@ var remove_all_selected = function() {
   $('.selected').removeClass('selected');
 }
 
-var remove_marker = function(resource) {
-  map.remove_marker(resource);
+var remove_marker = function(location) {
+  map.remove_marker(location);
 }
 
 var get_values_from_fields = function(loc, fields) {
