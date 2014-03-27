@@ -41,9 +41,12 @@ Deps.autorun(function() {
 
         Locations.find(
           {service_area:Session.get('county')._id,
-           sub_service_ids:{$in:service_ids}}).forEach(function(location) {
+           sub_service_ids:{$in:service_ids}},
+          {fields:{
+            sub_service_ids:true, address:true, _id:true, name:true}
+          }).forEach(function(location) {
              map.add_marker_from_location(location);
-           });
+          });
       }
     }
   )

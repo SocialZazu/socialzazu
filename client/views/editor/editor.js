@@ -76,7 +76,6 @@ Template.editor.created = function() {
   Session.set('resource_id', null);
   Session.set('keyup_timers', {});
   Session.set('skip_resource_page', 0);
-  Session.set('weekday_hours_the_same', true);
 }
 
 Template.editor.destroyed = function() {
@@ -131,7 +130,7 @@ Template.editor.helpers({
   locations: function() {
     var index = 0;
     var resource_locations = this.locations
-    return Locations.find({_id:{$in:resource_locations}}).map(function(location) {
+    return Locations.find({_id:{$in:resource_locations}, needs_edit:true}).map(function(location) {
       index += 1;
       if (index == resource_locations.length) {
         location.last_location = true;
@@ -159,7 +158,7 @@ Template.editor.helpers({
   },
   resource_datums: function() {
     return {
-      datums: Resources.find().map(function(resource) {
+      datums: Resources.find({}, {reactive:false, fields:{name:true, _id:true}}).map(function(resource) {
         //TODO: include a way to search by resource locations
         return {value:resource.name, name_route:resource._id}
       }),
@@ -170,7 +169,7 @@ Template.editor.helpers({
     return Resources.findOne({_id:Session.get('resource_id')});
   },
   resources: function() {
-    var resource_ids = Locations.find({needs_edit:true, service_area:Session.get('county')._id}).map(function(location) {
+    var resource_ids = Locations.find({needs_edit:true, service_area:Session.get('county')._id}, {fields:{resource_id:true}}).map(function(location) {
       return location.resource_id;
     });
     return Resources.find(
@@ -215,7 +214,7 @@ Template.edit_address.helpers({
 });
 
 Template.edit_buttons.events({
-  'click #save_location': function(e, tmpl) {
+  'click .save_location': function(e, tmpl) {
     //save edits made
     Session.set('message', null);
     var edits = collate_edits(false);
@@ -223,8 +222,10 @@ Template.edit_buttons.events({
       'save_location_edits',
       Session.get('is_editing'), Meteor.userId(), edits,
       function(error, result) {
-        if (!error && result['success']) {
-          success_message_with_warning();
+        if (!result['success']) {
+          Session.set('message', result['message']);
+        } else if (result['success']) {
+          success_message_with_warning(result['failures']);
           Session.set('is_editing', false);
           Session.set('track_inputs', {});
         } else {
@@ -233,32 +234,38 @@ Template.edit_buttons.events({
       }
     );
   },
-  'click #cancel_edits': function(e, tmpl) {
+  'click .cancel_edits': function(e, tmpl) {
     //cancel edits made, revert back div mode
     Session.set('track_inputs', {});
     Session.set('message', null);
     Session.set('is_editing', false);
   },
-  'click #edit_location': function(e, tmpl) {
+  'click .edit_location': function(e, tmpl) {
     //enter edit mode
     Session.set('track_inputs', {});
     Session.set('message', null);
     Session.set('is_editing', this.id);
   },
-  'click #mark_complete': function(e, tmpl) {
+  'click .mark_complete': function(e, tmpl) {
     //close all flags with this resource's _id
     //mark needs_edit to false
+    var id = this.id;
     Meteor.call('mark_complete',
-                Session.get('resource_id'), Meteor.userId(),
+                id, Meteor.userId(),
                 function(e, result) {
                   if (!e) {
                     Session.set('message', 'Success: Marked as complete. Thanks!');
                     Session.set('track_inputs', {});
                     Session.set('is_editing', false);
-                    Session.set('resource_id', null);
                   }
                 }
                );
+  }
+});
+
+Template.edit_buttons.helpers({
+  location_id: function() {
+    return {location_id:this.id}
   }
 });
 
@@ -311,8 +318,9 @@ Template.edit_field.helpers({
 });
 
 Template.edit_hours.events({
-  'click #weekday_hours_checkbox': function(e, tmpl) {
-    Session.set('weekday_hours_the_same', $(e.target).prop('checked'));
+  'click .weekday_hours_checkbox': function(e, tmpl) {
+    key = get_weekday_hours_key(this.location_id);
+    Session.set(key, $(e.target).prop('checked'));
   }
 });
 
@@ -324,7 +332,8 @@ Template.edit_hours.helpers({
     return "";
   },
   checked_hours_same: function() {
-    if (Session.get('weekday_hours_the_same')) {
+    var key = get_weekday_hours_key(this.location_id);
+    if (Session.get(key)) {
       return "checked";
     }
     return "";
@@ -354,10 +363,11 @@ Template.edit_hours.helpers({
     return time_placeholder(this.open_time);
   },
   period_title: function() {
-    return display_day(this.period);
+    return capitalize(this.period);
   },
   show_subfield: function() {
-    if (Session.get('weekday_hours_the_same') && weekdays_minus_mon.indexOf(this.period) > -1) {
+    key = get_weekday_hours_key(this.location_id);
+    if (Session.get(key) && weekdays_minus_mon.indexOf(this.period) > -1) {
       return "none";
     }
     return "block";
@@ -419,12 +429,11 @@ Template.edit_location.helpers({
     }
   },
   contacts: function() { //TODO: allow more contacts
-    var contacts = this.contacts;
-    if (contacts.length == 0) {
-      return [{name:'', title:'', _id:this._id}];
-    } else {
-      return contacts;
-    }
+    var id = this._id;
+    return this.contacts.map(function(contact) {
+      contact._id = id;
+      return contact;
+    });
   },
   contact_name: function() {
     return {
@@ -531,10 +540,17 @@ Template.edit_location.helpers({
   },
   services_dropdown: function() {
     return {
-      list: Services.find({_id:{$in:this.sub_service_ids}}, {sort:{name:1}}).map(function(service) {
-        return {id:service._id, value:service.name, remove_key:'remove_service_from_location'}
+      list: Services.find({_id:{$in:this.sub_service_ids}},
+                          {sort:{name:1},
+                           fields:{_id:true, name:true}
+                          }).map(function(service) {
+        return {id:service._id, value:service.name,
+                remove_key:'remove_service_from_location'}
       }),
-      all: Services.find({parents:{$exists:true, $ne:null}}, {sort:{name:1}}).map(function(service) {
+      all: Services.find({parents:{$exists:true, $ne:null}},
+                         {sort:{name:1},
+                          fields:{_id:true, name:true}
+                         }).map(function(service) {
         return {id:service._id, value:service.name, remove_key:'remove_service_from_location'}
       }),
       reactive_save_key: 'add_service_to_location',
@@ -653,12 +669,19 @@ Template.message.helpers({
       return "red";
     } else if (message.slice(0,7) == 'Success') {
       return "green";
-    } else if (message.slice(0,7) == 'Warning') {
+    } else if (message.indexOf('Warning') > -1) {
       return 'orange';
     }
   },
   message: function() {
-    return Session.get('message') || '';
+    //TODO: Fix so that it doesn't update every message
+    if (!this.location_id) {
+      return Session.get('message') || '';
+    } else if (Session.get('is_editing') == this.location_id) {
+      return Session.get('message') || '';
+    } else {
+      return '';
+    }
   }
 });
 
@@ -690,7 +713,6 @@ Template.new_resource.events({
     Meteor.call(
       'save_location_edits', null, Meteor.userId(), edits,
       function(error, result) {
-        console.log(result);
         if (!result['success']) {
           Session.set('message', result['message']);
         } else if (result['success']) {
@@ -798,11 +820,19 @@ Template.new_resource.helpers({
   services_dropdown: function() {
     var list = Session.get('track_inputs')['categories'] || [];
     return {
-      list: Services.find({_id:{$in:list}}, {sort:{name:1}}).map(function(service) {
-        return {id:service._id, value:service.name, remove_key:'remove_service_from_location'}
+      list: Services.find({_id:{$in:list}},
+                          {sort:{name:1},
+                           fields:{_id:true, name:true}
+                          }).map(function(service) {
+        return {id:service._id, value:service.name,
+                remove_key:'remove_service_from_location'}
       }),
-      all: Services.find({parents:{$exists:true, $ne:null}}, {sort:{name:1}}).map(function(service) {
-        return {id:service._id, value:service.name, remove_key: 'remove_service_from_location'};
+      all: Services.find({parents:{$exists:true, $ne:null}},
+                         {sort:{name:1},
+                          fields:{_id:true, name:true}
+                         }).map(function(service) {
+        return {id:service._id, value:service.name,
+                remove_key: 'remove_service_from_location'};
       }),
       reactive_save_key: 'add_service_to_location',
       span_size:3,
@@ -819,6 +849,7 @@ Template.open_edit.events({
   'click a': function(e, tmpl) {
     var resource_id = $(e.target).attr("resource_id");
     Session.set('resource_id', resource_id);
+    Session.set('message', null);
   }
 });
 
@@ -862,7 +893,7 @@ var collate_edits = function(all_required) {
     delete edits['website']
   }
 
-  edits['hours'] = collate_hours_edits()
+  edits['hours'] = collate_hours_edits(location_id)
   return edits;
 }
 
@@ -875,11 +906,11 @@ var _collate_hours_time = function(day, time) {
   }
 }
 
-var collate_hours_edits = function() {
+var collate_hours_edits = function(location_id) {
   var ret = {};
   days_abbr.forEach(function(day) {
     ret[day] = {};
-    if (Session.get('weekday_hours_the_same') && weekdays_minus_mon.indexOf(day) > -1) {
+    if (Session.get(get_weekday_hours_key(location_id)) && weekdays_minus_mon.indexOf(day) > -1) {
       ret[day] = ret['mon'];
     } else {
       ret[day]['closed'] = $('#' + day + '_checkbox').prop('checked');
@@ -890,45 +921,19 @@ var collate_hours_edits = function() {
   return ret;
 }
 
-var display_day = function(day) {
-  return capitalize(day);
-}
-
-var get_category_input_ids = function(services) {
-  var input_ids = {};
-  var parents = [];
-  Services.find({_id:{$in:services}}).forEach(function(service) {
-    if (service.resource_inputs && service.resource_inputs.length > 0) {
-      var service_id = service._id;
-      if (!(service_id in input_ids)) {
-        input_ids[service_id] = [];
-      }
-      for (var input_id in service.resource_inputs) {
-        input_ids[service_id].push(input_id);
-      }
-    }
-    parents = parents.concat(service.parents);
-  });
-  Services.find({_id:{$in:parents}}).forEach(function(parent) {
-    if (parent.resource_inputs && parent.resource_inputs.length > 0) {
-      input_ids = input_ids.concat(parent.resource_inputs);
-    }
-    var parent_id = parent._id;
-    if (!(parent_id in input_ids)) {
-      input_ids[parent_id] = [];
-    }
-    for (var input_id in parent.resource_inputs) {
-      input_ids[parent_id].push(input_id);
-    }
-  });
-  return input_ids;
-}
-
 var get_field_class = function(type, id) {
   if ((id && Session.get('location_id') == id) || is_editing_plus()) {
     return 'field_' + type;
   }
   return '';
+}
+
+var get_weekday_hours_key = function(id) {
+  if (id) {
+    return 'weekday_hours_the_same_' + id;
+  } else {
+    return 'weekday_hours_the_same'
+  }
 }
 
 is_editing_plus = function() {
@@ -992,14 +997,16 @@ var save_reactive_data = function(instr, field, value) {
   }
 }
 
-var success_message_with_warning = function() {
-  var message = Session.get('message');
-  if (message && message.slice(0,7) == "Warning") {
-    message += " Saved other edits";
+var success_message_with_warning = function(failures) {
+  if (failures.length == 0) {
+    Session.set('message', "Success: Thanks!");
   } else {
-    message = "Success: Saved edits. Thanks!";
+    var msg = "Submitted with caveats. "
+    failures.forEach(function(failure) {
+      msg += failure.message + ' ';
+    });
+    Session.set('message', msg);
   }
-  Session.set('message', message);
 }
 
 var time_placeholder = function(time) {
