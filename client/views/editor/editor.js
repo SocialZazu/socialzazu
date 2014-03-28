@@ -113,12 +113,6 @@ Template.editor.helpers({
     }
     return '';
   },
-  has_needs_edit: function() {
-    return total_needs_edit_count() > 0;
-  },
-  has_open_flags: function() {
-    return Flags.find({open:true}).count() > 0
-  },
   info_from_edit: function() {
     var timestamp = this.created_time || this.updated_time || '';
     return {
@@ -169,12 +163,21 @@ Template.editor.helpers({
     return Resources.findOne({_id:Session.get('resource_id')});
   },
   resources: function() {
-    var resource_ids = Locations.find({needs_edit:true, service_area:Session.get('county')._id}, {fields:{resource_id:true}}).map(function(location) {
-      return location.resource_id;
-    });
-    return Resources.find(
-      {_id:{$in:resource_ids}},
-      {limit:MAX_RESOURCES, skip:Session.get('skip_resource_page')*MAX_RESOURCES});
+    var unique_resource_ids = [];
+    var memo_resource_ids = {};
+    if (Session.get('county')) {
+      Locations.find({needs_edit:true, service_area:Session.get('county')._id}, {fields:{resource_id:true}}).forEach(function(location) {
+        var resource_id = location.resource_id;
+        if (!memo_resource_ids.hasOwnProperty(resource_id)) {
+          unique_resource_ids.push(resource_id);
+          memo_resource_ids[resource_id] = 1;
+        }
+      });
+
+      return Resources.find(
+        {_id:{$in:unique_resource_ids}},
+        {limit:MAX_RESOURCES, skip:Session.get('skip_resource_page')*MAX_RESOURCES});
+    }
   },
   show_edit_resource: function() {
     return Session.get('resource_id') !== null;

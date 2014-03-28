@@ -40,7 +40,6 @@
         </div>
       </div>
       <section class="well">
-        {{#if has_needs_edit}}
         <div class="row-fluid">
           <div class="span4">
             <h5>In Need of Editing</h5>
@@ -64,12 +63,8 @@
             {{/each}}
           </div>
         </div>
-        {{else}}
-        <h5>No Edits Reported</h5>
-        {{/if}}
       </section>
       <section class="well">
-        {{#if has_open_flags}}
         <div class="row-fluid">
           <div class="span5">
             <h5>Open Flags</h5>
@@ -78,9 +73,6 @@
         <div class="row-fluid">
           {{> open_flags}}
         </div>
-        {{else}}
-        <h5>No Open Flags</h5>
-        {{/if}}
       </section>
     </div>
     <div class="span6">
