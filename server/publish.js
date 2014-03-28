@@ -24,7 +24,7 @@ Meteor.publish('open_flags', function(county) {
   if (!county) {
     return [];
   }
-  return Flags.find({open:true, counties:county._id})
+  return Flags.find({open:true, county_id:county._id})
 });
 
 Meteor.publish('resource_from_id', function(id) {

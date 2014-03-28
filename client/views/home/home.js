@@ -11,6 +11,7 @@ Template.flag_control.events({
         Meteor.call("flag_location", this._id, Meteor.userId());
       } else {
         session_var_push('user_flags', this._id);
+        Meteor.call("flag_location", this._id, null);
       }
     }
   }
@@ -64,8 +65,6 @@ Template.home.helpers({
 Template.home.rendered = function() {
   var i = -1;
   if (!Session.get('display_services') || Session.get('display_services').length < SIDEBAR_NUM) {
-    console.log('tds')
-    console.log(this.data.services)
     Session.set(
       'display_services',
       this.data.services.map(

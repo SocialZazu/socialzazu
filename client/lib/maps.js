@@ -26,7 +26,6 @@ map = {
   },
 
   add_map_marker_in_view: function(marker) {
-    console.log(marker);
     var bounds = this.gmap.getBounds();
     if (bounds && bounds.contains(marker.position)) {
       session_var_push('map_markers_in_view', marker.id);
