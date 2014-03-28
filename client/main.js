@@ -49,5 +49,13 @@ Deps.autorun(function() {
           });
       }
     }
+  );
+
+  //Find
+  Meteor.subscribe(
+    'locations_from_parent_service',
+    Session.get('display_service'),
+    Session.get('county')
   )
+
 });

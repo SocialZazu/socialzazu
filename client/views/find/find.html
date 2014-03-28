@@ -1,0 +1,38 @@
+<template name="find">
+  <div class="row-fluid">
+    <div class="span4">
+      <div class="row-fluid">
+        <h4>What service are you looking for?</h4>
+      </div>
+      <hr>
+      {{#each parents}}
+      {{> parent_button}}
+      {{/each}}
+    </div>
+    <div class="span8">
+      <div class="row-fluid">
+        <h4 style="text-align:center">{{parent_name}}</h4>
+      </div>
+      <hr>
+      {{#each locations}}
+      {{> location_well}}
+      {{/each}}
+    </div>
+  </div>
+</template>
+
+<template name="parent_button">
+  <div class="row-fluid">
+    <button type="button" class="btn btn-default parent_button" style="margin-bottom:10px">
+      <div class="left" style="margin-right:5px">
+        IMG
+      </div>
+      <div class="left">
+        {{name}}
+      </div>
+      <div class="right">
+        <i class="fa fa-hand-o-right"></i>
+      </div>
+    </button>
+  </div>
+</template>

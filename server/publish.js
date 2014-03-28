@@ -57,6 +57,19 @@ Meteor.publish('search_resources_from_county', function(county) {
                         {sort:{name:1}});
 });
 
+Meteor.publish('locations_from_parent_service', function(service_id, county) {
+  if (!service_id || !county) {
+    return [];
+  }
+  sub_service_ids = Services.findOne({_id:service_id}).children;
+  if (!sub_service_ids || sub_service_ids.length == 0) {
+    return [];
+  } else {
+    return Locations.find({service_area:county._id,
+                           sub_service_ids:{$in:sub_service_ids}});
+  }
+});
+
 Meteor.publish('locations_from_services', function(services, county) {
   if (!services || services.length == 0 || !county) {
     return [];
@@ -64,7 +77,8 @@ Meteor.publish('locations_from_services', function(services, county) {
   service_ids = services.map(function(service) {
     return service._id;
   });
-  return Locations.find({service_area:county._id, sub_service_ids:{$in:service_ids}});
+  return Locations.find({service_area:county._id,
+                         sub_service_ids:{$in:service_ids}});
 });
 
 Meteor.publish('service_name_route', function(name_route) {
@@ -77,6 +91,10 @@ Meteor.publish('services', function() {
 
 Meteor.publish('sub_services', function() {
   return Services.find({parents:{$exists:true, $ne:null}});
+});
+
+Meteor.publish('super_services', function() {
+  return Services.find({'children.1':{$exists:true}});
 });
 
 //TODO: change to incorporate some metric
