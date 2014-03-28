@@ -147,7 +147,7 @@ map = {
     var bounds = this.gmap.getBounds();
     for (var i = 0; i < this.markers.length; i++) {
       if (bounds.contains(this.markers[i].position) && this.markers[i].map) {
-        markerIDs.push(this.markerIDs[i].slice(0,-2));
+        markerIDs.push(this.markerIDs[i]);
       }
     }
     return markerIDs;
