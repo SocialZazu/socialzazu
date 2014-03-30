@@ -43,14 +43,17 @@
 	z-index: -1;
 }
 
-.box {
+/*.box {
     position: relative;
-    padding: 15px;
-    margin: 0 auto;
-    margin-bottom: 15px;
+    margin: 0;  
     -webkit-box-shadow: 0 0 3px rgba(0, 0, 0, 0.2), inset 0 0 8px rgba(0, 0, 0, 0.1);
     -moz-box-shadow: 0 0 3px rgba(0, 0, 0, 0.2), inset 0 0 8px rgba(0, 0, 0, 0.1);
     box-shadow: 0 0 3px rgba(0, 0, 0, 0.2), inset 0 0 8px rgba(0, 0, 0, 0.1);
+}*/ /*deprecated?*/
+
+.map-wrapper {
+  display: block;
+  height: 100%;
 }
 
 .shadow-box:after
@@ -110,4 +113,273 @@ hr.style-two {
 .parent_button {
     width:100%;
     margin-bottom:10px
+}
+
+/** TML 03/29/14 **/
+/** NOTE! This should be concatenated into a .less file if we decide to use .less preprocessing **/
+
+/** DEBUG ONLY! **/
+
+.input-append {
+  width: 100%;
+}
+
+.input-append #search_map_field {
+  border-top-left-radius: 14px;
+  border-bottom-left-radius: 14px;
+  width: 85%;
+  float: left;
+  padding-left: 2%;
+  padding-right: 2%;
+  margin: 0;
+}
+
+.input-append #find_me {
+  width: 10%;
+  float: left;
+  margin: 0;
+}
+
+#search_services_form {
+  width: 100%;
+}
+
+#search_services_form .twitter-typeahead{
+  position: relative;
+  display: inline-block;
+  float: left;
+  width: 85%;
+}
+
+#search_services_form #search_services_field {
+  width: 95%;
+  padding-left: 2%;
+  padding-right: 2%;
+}
+
+#search_services_form .btn {
+  float: left;
+  width: 15%;
+  padding: 9px 0;
+  position: relative;
+}
+
+
+#search_locations_form {
+  width: 100%;
+}
+
+#search_locations_form .twitter-typeahead{
+  position: relative;
+  display: inline-block;
+  float: left;
+  width: 85%;
+}
+
+#search_locations_form #search_locations_field {
+  width: 95%;
+  padding-left: 2%;
+  padding-right: 2%;
+}
+
+#search_locations_form .btn {
+  float: left;
+  width: 15%;
+  padding: 9px 0;
+  position: relative;
+}
+
+#homeBigBlock {
+  display: block;
+}
+
+#homeBigBlock:after {
+  content:"";
+  display: table;
+  clear: both;
+}
+
+#services_home {
+  display: block;
+  width: 49%;
+  float: left;
+  position: relative;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+#map_home #map_canvas {
+  height: 100%;
+  display: block;
+}
+
+#map_home {
+  display: block;
+  width: 49%;
+  min-height: 300px;
+  height: 300px;
+  float: right;
+}
+
+#services_home .slidePanel {
+  display: block;
+  width: auto;
+  height: auto;
+  position: relative;
+  left: 0;
+  top: 0;
+}
+
+#services_home .slidePanel:after {
+  content:"";
+  display:table;
+  clear:both;
+}
+
+#services_home .slidePanel .slidePanelItem {
+  width: 100%;
+  float: left;
+}
+
+#services_home ul {
+  display: block;
+  width: 100%;
+  margin: 0;
+}
+
+#services_home ul li{
+  list-style-type:none;
+  display: block;
+  width: 100%;
+  padding: 10px 0;
+  margin-bottom: 6px;
+  -webkit-border-radius: 50px;
+  -moz-border-radius: 50px;
+  border-radius: 50px;
+  cursor: pointer;
+  background: #e2e2e2; /* Old browsers */
+  /* IE9 SVG, needs conditional override of 'filter' to 'none' */
+  background: url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/Pgo8c3ZnIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgdmlld0JveD0iMCAwIDEgMSIgcHJlc2VydmVBc3BlY3RSYXRpbz0ibm9uZSI+CiAgPGxpbmVhckdyYWRpZW50IGlkPSJncmFkLXVjZ2ctZ2VuZXJhdGVkIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgeDE9IjAlIiB5MT0iMCUiIHgyPSIwJSIgeTI9IjEwMCUiPgogICAgPHN0b3Agb2Zmc2V0PSIxOSUiIHN0b3AtY29sb3I9IiNlMmUyZTIiIHN0b3Atb3BhY2l0eT0iMSIvPgogICAgPHN0b3Agb2Zmc2V0PSI4MSUiIHN0b3AtY29sb3I9IiNiY2JjYmMiIHN0b3Atb3BhY2l0eT0iMSIvPgogIDwvbGluZWFyR3JhZGllbnQ+CiAgPHJlY3QgeD0iMCIgeT0iMCIgd2lkdGg9IjEiIGhlaWdodD0iMSIgZmlsbD0idXJsKCNncmFkLXVjZ2ctZ2VuZXJhdGVkKSIgLz4KPC9zdmc+);
+  background: -moz-linear-gradient(top,  #e2e2e2 19%, #bcbcbc 81%); /* FF3.6+ */
+  background: -webkit-gradient(linear, left top, left bottom, color-stop(19%,#e2e2e2), color-stop(81%,#bcbcbc)); /* Chrome,Safari4+ */
+  background: -webkit-linear-gradient(top,  #e2e2e2 19%,#bcbcbc 81%); /* Chrome10+,Safari5.1+ */
+  background: -o-linear-gradient(top,  #e2e2e2 19%,#bcbcbc 81%); /* Opera 11.10+ */
+  background: -ms-linear-gradient(top,  #e2e2e2 19%,#bcbcbc 81%); /* IE10+ */
+  background: linear-gradient(to bottom,  #e2e2e2 19%,#bcbcbc 81%); /* W3C */
+  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#e2e2e2', endColorstr='#bcbcbc',GradientType=0 ); /* IE6-8 */
+
+}
+
+#services_home ul li:hover {
+background: #d6d6d6; /* Old browsers */
+/* IE9 SVG, needs conditional override of 'filter' to 'none' */
+background: url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/Pgo8c3ZnIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgdmlld0JveD0iMCAwIDEgMSIgcHJlc2VydmVBc3BlY3RSYXRpbz0ibm9uZSI+CiAgPGxpbmVhckdyYWRpZW50IGlkPSJncmFkLXVjZ2ctZ2VuZXJhdGVkIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgeDE9IjAlIiB5MT0iMCUiIHgyPSIwJSIgeTI9IjEwMCUiPgogICAgPHN0b3Agb2Zmc2V0PSIxOSUiIHN0b3AtY29sb3I9IiNkNmQ2ZDYiIHN0b3Atb3BhY2l0eT0iMSIvPgogICAgPHN0b3Agb2Zmc2V0PSI4MSUiIHN0b3AtY29sb3I9IiM5Njk2OTYiIHN0b3Atb3BhY2l0eT0iMSIvPgogIDwvbGluZWFyR3JhZGllbnQ+CiAgPHJlY3QgeD0iMCIgeT0iMCIgd2lkdGg9IjEiIGhlaWdodD0iMSIgZmlsbD0idXJsKCNncmFkLXVjZ2ctZ2VuZXJhdGVkKSIgLz4KPC9zdmc+);
+background: -moz-linear-gradient(top,  #d6d6d6 19%, #969696 81%); /* FF3.6+ */
+background: -webkit-gradient(linear, left top, left bottom, color-stop(19%,#d6d6d6), color-stop(81%,#969696)); /* Chrome,Safari4+ */
+background: -webkit-linear-gradient(top,  #d6d6d6 19%,#969696 81%); /* Chrome10+,Safari5.1+ */
+background: -o-linear-gradient(top,  #d6d6d6 19%,#969696 81%); /* Opera 11.10+ */
+background: -ms-linear-gradient(top,  #d6d6d6 19%,#969696 81%); /* IE10+ */
+background: linear-gradient(to bottom,  #d6d6d6 19%,#969696 81%); /* W3C */
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#d6d6d6', endColorstr='#969696',GradientType=0 ); /* IE6-8 */
+
+}
+
+#services_home ul li.loading {
+  background: 0;
+  -webkit-border-radius: 0px;
+  -moz-border-radius: 0px;
+  border-radius: 0px;
+  cursor: default;
+}
+
+#services_home ul li.loading img {
+  display: block;
+  margin: 0 auto;
+  width: 25px;
+}
+
+#services_home ul li:after{
+  content: "";
+  display: table;
+  clear: both;
+}
+
+#services_home ul li .serviceBoxIcon{ 
+  display: block;
+  width: 25px;
+  height: 25px;
+  margin: 0 10px 0 16px;
+  background: url('zazuicons1.png');
+  float: left;
+}
+
+#services_home ul li .serviceBoxIcon.Shelters {
+  background-position: 0 0;
+} 
+
+#services_home ul li .serviceBoxIcon.Treatment {
+  background-position: 0 -26px;
+} 
+
+#services_home ul li .serviceBoxIcon.Hot.Meals {
+  background-position: 0 -52px;
+} 
+
+#services_home ul li .serviceBoxIcon.Food.Pantry {
+  background-position: 0 -78px;
+} 
+
+#services_home ul li .serviceBoxIcon.Insurance {
+  background-position: 0 -104px;
+} 
+
+#services_home ul li .serviceBoxIcon.Delivery {
+  background-position: 0 -130px;
+} 
+
+#services_home ul li .serviceBoxName{
+  float: left;
+} 
+
+#services_home ul li .serviceBoxCount{ 
+  float: right;
+  margin: 0 10px;
+  float: left;
+}
+
+#services_home .backBtn {
+  display: block;
+  text-indent: 20px;
+  font-weight: bold;
+  width: 100%;
+  padding: 10px 0;
+  margin-bottom: 6px;
+  -webkit-border-radius: 50px;
+  -moz-border-radius: 50px;
+  border-radius: 50px;
+  cursor: pointer;
+  background: #e2e2e2; /* Old browsers */
+  /* IE9 SVG, needs conditional override of 'filter' to 'none' */
+  background: url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/Pgo8c3ZnIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgdmlld0JveD0iMCAwIDEgMSIgcHJlc2VydmVBc3BlY3RSYXRpbz0ibm9uZSI+CiAgPGxpbmVhckdyYWRpZW50IGlkPSJncmFkLXVjZ2ctZ2VuZXJhdGVkIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgeDE9IjAlIiB5MT0iMCUiIHgyPSIwJSIgeTI9IjEwMCUiPgogICAgPHN0b3Agb2Zmc2V0PSIxOSUiIHN0b3AtY29sb3I9IiNlMmUyZTIiIHN0b3Atb3BhY2l0eT0iMSIvPgogICAgPHN0b3Agb2Zmc2V0PSI4MSUiIHN0b3AtY29sb3I9IiNiY2JjYmMiIHN0b3Atb3BhY2l0eT0iMSIvPgogIDwvbGluZWFyR3JhZGllbnQ+CiAgPHJlY3QgeD0iMCIgeT0iMCIgd2lkdGg9IjEiIGhlaWdodD0iMSIgZmlsbD0idXJsKCNncmFkLXVjZ2ctZ2VuZXJhdGVkKSIgLz4KPC9zdmc+);
+  background: -moz-linear-gradient(top,  #e2e2e2 19%, #bcbcbc 81%); /* FF3.6+ */
+  background: -webkit-gradient(linear, left top, left bottom, color-stop(19%,#e2e2e2), color-stop(81%,#bcbcbc)); /* Chrome,Safari4+ */
+  background: -webkit-linear-gradient(top,  #e2e2e2 19%,#bcbcbc 81%); /* Chrome10+,Safari5.1+ */
+  background: -o-linear-gradient(top,  #e2e2e2 19%,#bcbcbc 81%); /* Opera 11.10+ */
+  background: -ms-linear-gradient(top,  #e2e2e2 19%,#bcbcbc 81%); /* IE10+ */
+  background: linear-gradient(to bottom,  #e2e2e2 19%,#bcbcbc 81%); /* W3C */
+  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#e2e2e2', endColorstr='#bcbcbc',GradientType=0 ); /* IE6-8 */
+}
+
+#services_home .backBtn:hover {
+background: #d6d6d6; /* Old browsers */
+/* IE9 SVG, needs conditional override of 'filter' to 'none' */
+background: url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/Pgo8c3ZnIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgdmlld0JveD0iMCAwIDEgMSIgcHJlc2VydmVBc3BlY3RSYXRpbz0ibm9uZSI+CiAgPGxpbmVhckdyYWRpZW50IGlkPSJncmFkLXVjZ2ctZ2VuZXJhdGVkIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgeDE9IjAlIiB5MT0iMCUiIHgyPSIwJSIgeTI9IjEwMCUiPgogICAgPHN0b3Agb2Zmc2V0PSIxOSUiIHN0b3AtY29sb3I9IiNkNmQ2ZDYiIHN0b3Atb3BhY2l0eT0iMSIvPgogICAgPHN0b3Agb2Zmc2V0PSI4MSUiIHN0b3AtY29sb3I9IiM5Njk2OTYiIHN0b3Atb3BhY2l0eT0iMSIvPgogIDwvbGluZWFyR3JhZGllbnQ+CiAgPHJlY3QgeD0iMCIgeT0iMCIgd2lkdGg9IjEiIGhlaWdodD0iMSIgZmlsbD0idXJsKCNncmFkLXVjZ2ctZ2VuZXJhdGVkKSIgLz4KPC9zdmc+);
+background: -moz-linear-gradient(top,  #d6d6d6 19%, #969696 81%); /* FF3.6+ */
+background: -webkit-gradient(linear, left top, left bottom, color-stop(19%,#d6d6d6), color-stop(81%,#969696)); /* Chrome,Safari4+ */
+background: -webkit-linear-gradient(top,  #d6d6d6 19%,#969696 81%); /* Chrome10+,Safari5.1+ */
+background: -o-linear-gradient(top,  #d6d6d6 19%,#969696 81%); /* Opera 11.10+ */
+background: -ms-linear-gradient(top,  #d6d6d6 19%,#969696 81%); /* IE10+ */
+background: linear-gradient(to bottom,  #d6d6d6 19%,#969696 81%); /* W3C */
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#d6d6d6', endColorstr='#969696',GradientType=0 ); /* IE6-8 */
+
 }

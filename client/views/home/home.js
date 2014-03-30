@@ -3,6 +3,42 @@ Session.set('user_flags', []);
 Deps.autorun(function() {
 });
 
+
+//TEMPLATE RENDER EVENTS ARE FIRING MULTIPLE TIMES - USING DOC READY.
+$(function(){
+  console.log('doc ready');
+  $(document).on('click', '#services_home li', function(e){
+      //create slidepanelitem element with loading graphic, slide slidepanel
+      var dom = $('<div class="slidePanelItem"></div>'),
+          numPanelItems = $('#services_home .slidePanelItem').length + 1,
+          servicesHomeWidth = $('#services_home').width()
+      dom.append('<div class="backBtn"> &lt; Back </div>');
+      dom.append('<ul><li class="loading"><img src="zazuSpinner1.gif"></li></ul>');
+      $('#services_home .slidePanel').append(dom);
+      $('#services_home .slidePanel').width( servicesHomeWidth * numPanelItems )
+      $('#services_home .slidePanelItem').width( $('#services_home').width() )
+      $('#services_home .slidePanel').animate({
+        left: parseFloat($('#services_home .slidePanel').css('left')) - ( (numPanelItems - 1) * servicesHomeWidth )
+      }, 600);
+      //make ajax request with type of service (data-service on tag?) and current location,zoom of map
+      //ajax success: update ul element with data returned by request
+      //ajax fail: update ul element with "could not load resource"
+  });
+
+  $(document).on('click', '#services_home .backBtn', function(e){
+    //slide slidepanel back 1 step, remove latest addition
+    var numPaneltems = $('#services_home .slidePanelItem').length - 1,
+        servicesHomeWidth = $('#services_home').width();
+        $('#services_home .slidePanel').animate({
+        left: parseFloat($('#services_home .slidePanel').css('left')) + ( servicesHomeWidth )
+      }, 600).promise().then(
+        function() {
+          $('#services_home .slidePanelItem').eq(-1).remove(); 
+        }
+      )
+  });
+});
+
 Template.flag_control.events({
   'click .flag': function(e, tmpl) {
     flag = $(tmpl.find('i'));
@@ -83,7 +119,7 @@ Template.home.rendered = function() {
         }
       )
     );
-    $('#search_services_form').outerWidth($('#services_home').width());
+   // $('#search_services_form').outerWidth($('#services_home').width()); //STOP DOING THIS
   }
     if (Session.get('county') && Session.get('map') && !Session.get('init_pan_to_county')) {
       Session.set('init_pan_to_county', true);
@@ -101,7 +137,7 @@ Template.search_locations.rendered = function() {
   });
   datums.initialize();
 
-  $('#search_locations_field').outerWidth($('#display_home').width() - 54)
+  //$('#search_locations_field').outerWidth($('#display_home').width() - 54) //STOP DOING THIS
   $('#search_locations_field').typeahead(null, {
     displayKey: 'value',
     source: datums.ttAdapter()
@@ -132,8 +168,8 @@ Template.map_home.rendered = function() {
       Session.set('map_markers_in_view', map.markers_in_bounds());
     });
   }
-  $('#search_map_field').outerWidth(
-    $('#map_canvas').width() + 30 - $('#find_me').outerWidth())
+  // $('#search_map_field').outerWidth(
+  //   $('#map_canvas').width() + 30 - $('#find_me').outerWidth())
   trigger_map_resize();
 }
 
@@ -333,9 +369,9 @@ Template.services_sidebar.helpers({
 
 Template.services_sidebar.rendered = function() {
   add_all_selected();
-  $('#map_canvas').css("height", $('#services_home').height() - 30);
-  $('#display_home').css("height", $('#services_home').height());
-  $('.search-query.tt-hint').width('inherit');
+  // $('#map_canvas').css("height", $('#services_home').height() - 30);
+  // $('#display_home').css("height", $('#services_home').height());
+  // $('.search-query.tt-hint').width('inherit');
 }
 
 Template.show_map_locations.helpers({
