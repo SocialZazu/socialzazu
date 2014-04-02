@@ -103,6 +103,7 @@
       </div>
     </div>
   </div>
+  <div id="textarea_fitter" style="display:none; height:auto; width:auto; max-width:100vw;"></div>
 </template>
 
 <template name="edit_address">
@@ -342,7 +343,7 @@
 <template name="edit_toggle">
   <div class="row-fluid">
     {{#if is_editing location_id}}
-    <input type="text" style="width:{{width}}" id="{{id}}" class="black" value="{{current}}">
+    <textarea style="width:{{width}}" id="{{id}}" class="black" rows="1">{{current}}</textarea>
     {{else}}
     {{current}}
     {{/if}}
@@ -361,7 +362,7 @@
       {{field}}{{is_required_field field}}:
     </div>
     <div class="span9">
-      <input type="text" style="width:92%" id="{{id}}">
+      <textarea rows="1" style="width:92%" id="{{id}}"></textarea>
     </div>
   </div>
 </template>

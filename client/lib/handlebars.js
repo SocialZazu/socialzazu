@@ -15,3 +15,7 @@ Handlebars.registerHelper("is_required_field", function(field) {
   }
   return '';
 });
+
+Handlebars.registerHelper("lowercase", function(str) {
+  return str.toLowerCase();
+});

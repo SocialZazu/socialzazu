@@ -58,7 +58,7 @@ Template.category_input.helpers({
     return {
       width:"90%",
       current:this.values,
-      id:this.field,
+      id:this.field.toLowerCase(),
       is_category_specific_input:true,
       location_id:this.location_id
     }
@@ -314,7 +314,7 @@ Template.edit_field.helpers({
   toggle_info: function() {
     return {
       current: this.current,
-      id: this.field.trim().split(' ').join('_'),
+      id: this.field.toLowerCase().trim().split(' ').join('_'),
       location_id: this.id
     }
   }
@@ -621,47 +621,38 @@ Template.edit_search_resources.rendered = function() {
 }
 
 Template.edit_toggle.events({
-  'keyup input': function(e, tmpl) {
+  'keyup textarea': function(e, tmpl) {
     var current = this.current;
-    var id = this.id.toLowerCase();
-    var value = $(tmpl.find('input')).val();
+    var id = this.id;
+    var input = $(e.target);
+    var value = input.val();
     var is_category_specific = this.is_category_specific_input;
 
-    var timers = Session.get('keyup_timers');
-    if (id in timers) {
-      window.clearTimeout(timers[id]);
-    }
-    var timer = window.setTimeout(function() {
-      if (is_category_specific) {
-        var inputs = Session.get('track_inputs')
-        var category_specific_inputs = inputs['category_specific_inputs'] || {};
-        if (value == current && id in category_specific_inputs) {
-          delete category_specific_inputs[id];
-          inputs['category_specific_inputs'] = category_specific_inputs;
-          Session.set('track_inputs', inputs);
-        } else if (value != current) {
-          category_specific_inputs[id] = value;
-          inputs['category_specific_inputs'] = category_specific_inputs;
-          Session.set('track_inputs', inputs);
-        }
-      } else if (value == current) {
-        session_var_unset_obj('track_inputs', id);
-      } else {
-        session_var_set_obj('track_inputs', id, value);
-      }
-      session_var_set_obj('keyup_timers', id, null);
-    }, 1000);
-    timers[id] = timer;
-    Session.set('keyup_timers', timers);
+    set_timer_for_category_specific_input(
+      current, value, id, is_category_specific
+    );
+    set_textarea_row_number(id, value, input);
   }
 });
 
 Template.edit_toggle.helpers({
+  row_num: function() {
+    return get_textarea_row_number(this.id, textarea.val(), textarea).toString();
+  },
   width: function() {
     var width = this.width || "92%"
     return width;
-  }
+  },
 });
+
+Template.edit_toggle.rendered = function() {
+  if (this.data.location_id) {
+    //TODO: Wow this is a bad idea. Renderssssss like mad
+    console.log('rendering edit_toggle')
+    var input = $('#' + this.data.id);
+    set_textarea_row_number(this.data.id, input.val(), input);
+  }
+}
 
 Template.message.helpers({
   color: function() {
@@ -689,23 +680,19 @@ Template.message.helpers({
 });
 
 Template.new_field.events({
-  'keyup input': function(e, tmpl) {
+  'keyup textarea': function(e, tmpl) {
     var id = this.id;
-    var value = $(tmpl.find('input')).val();
+    var value = $(tmpl.find('textarea')).val();
     if (value == '') {
       e.preventDefault();
       return;
     }
-    var timers = Session.get('keyup_timers');
-    if (id in timers) {
-      window.clearTimeout(timers[id]);
+
+    if (e.keyCode == 13) {
+      //do add another row to textarea
     }
-    var timer = window.setTimeout(function() {
-      session_var_set_obj('keyup_timers', id, null);
-      session_var_set_obj('track_inputs', id, value)
-    }, 1000);
-    timers[id] = timer;
-    Session.set('keyup_timers', timers);
+    set_timer_for_category_specific_input(null, value, id, null);
+    // set_textarea_row_number(id, value, $(e.target), tmpl)
   }
 })
 
@@ -937,6 +924,54 @@ var get_weekday_hours_key = function(id) {
   } else {
     return 'weekday_hours_the_same'
   }
+}
+
+var set_textarea_row_number = function(id, value, input) {
+  var test = $('#textarea_fitter');
+  test.text(value);
+  var width = test.width();
+  var input_width = input.width();
+  var rows = parseInt(input.attr('rows'));
+  while(width >= input_width*rows) {
+    rows += 1;
+  }
+  while(width < input_width*(rows-1)) {
+    rows -= 1;
+  }
+  var original_rows = parseInt(input.attr('rows'));
+  if (original_rows != rows) {
+    input.attr('rows', rows.toString());
+  }
+}
+
+var set_timer_for_category_specific_input = function(current, value, id, is_category_specific) {
+  var timers = Session.get('keyup_timers');
+  if (id in timers) {
+    window.clearTimeout(timers[id]);
+  }
+  timers[id] = window.setTimeout(function() {
+    if (current == null) {
+      session_var_set_obj('track_inputs', id, value)
+    } else if (is_category_specific) {
+      var inputs = Session.get('track_inputs')
+      var category_specific_inputs = inputs['category_specific_inputs'] || {};
+      if (value == current && id in category_specific_inputs) {
+        delete category_specific_inputs[id];
+        inputs['category_specific_inputs'] = category_specific_inputs;
+        Session.set('track_inputs', inputs);
+      } else if (value != current) {
+        category_specific_inputs[id] = value;
+        inputs['category_specific_inputs'] = category_specific_inputs;
+        Session.set('track_inputs', inputs);
+      }
+    } else if (value == current) {
+      session_var_unset_obj('track_inputs', id);
+    } else {
+      session_var_set_obj('track_inputs', id, value);
+    }
+    session_var_set_obj('keyup_timers', id, null);
+  }, 1000);
+  Session.set('keyup_timers', timers);
 }
 
 is_editing_plus = function() {
