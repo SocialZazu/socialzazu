@@ -7,33 +7,42 @@
 </template>
 
 <template name="home">
-  <div class="row-fluid searchMap">
-    <div class="span12">
-      {{> search_map}}
-    </div>
-  </div>
   <div class="row-fluid">
-    <div class="span6 searchServices">
+    <div class="span3">
       {{> search_services service_datums}}
     </div>
-    <div class="span6 searchLocations">
+    <div class="span5" style="margin-left:20px">
+      <div class="row-fluid">
+        <div class="span9">
+          {{> search_map}}
+        </div>
+      </div>
+    </div>
+    <div class="span4">
       {{> search_locations location_datums}}
     </div>
   </div>
-  <div class="row-fluid" id="homeBigBlock">
-    <div id="services_home">
+  <div class="row-fluid" style="height:100%">
+    <div class="span3" id="services_home">
       {{> services_sidebar}}
     </div>
-    <div id="map_home">
+    <div class="span5" style="height:100%; margin-left:20px">
       {{> map_home}}
+    </div>
+    <div class="span4" style="overflow-y: scroll;" id="display_home">
+      {{> show_map_locations}}
     </div>
   </div>
 </template>
 
 <template name="map_home">
-  {{#constant}}
-  <div id="map_canvas"></div>
-  {{/constant}}
+  <div class="box">
+    <div class="box-wrapper">
+      {{#constant}}
+      <div id="map_canvas"></div>
+      {{/constant}}
+    </div>
+  </div>
 </template>
 
 <template name="location_address">
@@ -210,15 +219,9 @@
 </template>
 
 <template name="services_sidebar">
-  <div class="slidePanel">
-    <div class="slidePanelItem">
-      <ul>
-        {{#each services}}
-        {{> service_box}}
-        {{/each}}
-      </ul>
-    </div>
-  </div>
+  {{#each services}}
+  {{> service_box}}
+  {{/each}}
 </template>
 
 <template name="search_map">
@@ -231,11 +234,16 @@
 </template>
 
 <template name="service_box">
-  <li>
-    <span class="serviceBoxIcon {{name}}"></span>
-    <span class="serviceBoxName">{{name}}</span>
-    <span class="serviceBoxCount">{{count}}</span>
-  </li>
+  <div class="serviceBox selected" color={{color}}>
+    <div class="row-fluid" style="position:relative; top:15px">
+      <div class="span10">
+        {{name}}
+      </div>
+      <div class="pull-right">
+        {{count}}
+      </div>
+    </div>
+  </div>
 </template>
 
 <template name="show_map_locations">
