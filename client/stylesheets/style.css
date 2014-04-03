@@ -43,13 +43,15 @@
 	z-index: -1;
 }
 
-/*.box {
+.box {
     position: relative;
-    margin: 0;  
+    padding: 15px;
+    margin: 0 auto;
+    margin-bottom: 15px;
     -webkit-box-shadow: 0 0 3px rgba(0, 0, 0, 0.2), inset 0 0 8px rgba(0, 0, 0, 0.1);
     -moz-box-shadow: 0 0 3px rgba(0, 0, 0, 0.2), inset 0 0 8px rgba(0, 0, 0, 0.1);
     box-shadow: 0 0 3px rgba(0, 0, 0, 0.2), inset 0 0 8px rgba(0, 0, 0, 0.1);
-}*/ /*deprecated?*/
+} /*deprecated?*/
 
 .map-wrapper {
   display: block;
@@ -304,7 +306,7 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#d6d6d6', end
   clear: both;
 }
 
-#services_home ul li .serviceBoxIcon{ 
+#services_home ul li .serviceBoxIcon{
   display: block;
   width: 25px;
   height: 25px;
@@ -315,33 +317,33 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#d6d6d6', end
 
 #services_home ul li .serviceBoxIcon.Shelters {
   background-position: 0 0;
-} 
+}
 
 #services_home ul li .serviceBoxIcon.Treatment {
   background-position: 0 -26px;
-} 
+}
 
 #services_home ul li .serviceBoxIcon.Hot.Meals {
   background-position: 0 -52px;
-} 
+}
 
 #services_home ul li .serviceBoxIcon.Food.Pantry {
   background-position: 0 -78px;
-} 
+}
 
 #services_home ul li .serviceBoxIcon.Insurance {
   background-position: 0 -104px;
-} 
+}
 
 #services_home ul li .serviceBoxIcon.Delivery {
   background-position: 0 -130px;
-} 
+}
 
 #services_home ul li .serviceBoxName{
   float: left;
-} 
+}
 
-#services_home ul li .serviceBoxCount{ 
+#services_home ul li .serviceBoxCount{
   float: right;
   margin: 0 10px;
   float: left;
