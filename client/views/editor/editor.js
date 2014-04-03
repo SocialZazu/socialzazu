@@ -682,7 +682,8 @@ Template.message.helpers({
 Template.new_field.events({
   'keyup textarea': function(e, tmpl) {
     var id = this.id;
-    var value = $(tmpl.find('textarea')).val();
+    var input = $(e.target);
+    var value = input.val();
     if (value == '') {
       e.preventDefault();
       return;
@@ -692,7 +693,7 @@ Template.new_field.events({
       //do add another row to textarea
     }
     set_timer_for_category_specific_input(null, value, id, null);
-    // set_textarea_row_number(id, value, $(e.target), tmpl)
+    set_textarea_row_number(id, value, input);
   }
 })
 
