@@ -1,10 +1,17 @@
 {
   "packages": {
-    "iron-router": {},
+    "iron-router": {
+      "git": "https://github.com/EventedMind/iron-router.git",
+      "tag": "v0.6.4"
+    },
+    "accounts-entry": {
+      "git": "https://github.com/BeDifferential/accounts-entry.git",
+      "tag": "v0.6.2"
+    },
     "typeahead": {},
     "roles": {},
-    "accounts-entry": {},
     "bootstrap-themes": {},
-    "font-awesome": {}
+    "font-awesome": {},
+    "select2": {}
   }
 }

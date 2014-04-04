@@ -6,7 +6,6 @@
 standard-app-packages
 insecure
 preserve-inputs
-iron-router
 accounts-base
 less
 accounts-password
@@ -17,3 +16,5 @@ typeahead
 roles
 font-awesome
 underscore
+iron-router
+select2
