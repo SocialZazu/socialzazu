@@ -157,19 +157,24 @@
 </template>
 
 <template name="edit_dropdown">
-  {{#if has_span_size}}
+  {{#unless no_span_size}}
   <div class="row-fluid">
     <div class="span{{span_size}}">
       {{field}}
     </div>
     <div class="span{{span_diff}}">
-  {{/if}}
+  {{/unless}}
       {{#if is_editing location_id}}
+
       {{#each list}}
+      {{#isolate}}
       <a class="btn btn-default btn-small remove_dropdown" style="margin-bottom:3px" href="#" id="{{id}}" remove_key="{{remove_key}}" field="{{../field}}">
         <i class="fa fa-times"></i> {{capitalize value}}
       </a>
+      {{/isolate}}
       {{/each}}
+
+      {{#constant}}
       <div class="row-fluid" style="margin-top:{{margin_top}}">
         <select class="form-control" field="{{field}}">
           <option value="instr">Select From List</option>
@@ -178,17 +183,22 @@
           {{/each}}
         </select>
       </div>
+      {{/constant}}
+
       {{else}}
+      {{#constant}}
       {{#each list}}
       <a class="btn btn-default btn-small" href="#">
         {{capitalize value}}
       </a>
       {{/each}}
+      {{/constant}}
+
       {{/if}}
-  {{#if has_span_size}}
+  {{#unless no_span_size}}
     </div>
   </div>
-  {{/if}}
+  {{/unless}}
 </template>
 
 <template name="edit_field">
@@ -303,7 +313,9 @@
   {{#each addresses}} <!--TODO allow for removing address -->
   {{> edit_address}}
   {{/each}}
+  {{#isolate}}
   {{> edit_dropdown services_dropdown}}
+  {{/isolate}}
   {{> edit_dropdown accessibility_dropdown}}
   {{> edit_languages languages}}
   {{> edit_field short_desc}}
@@ -421,13 +433,4 @@
     {{> open_edit info_from_flag}}
     {{/each}}
   </div>
-</template>
-
-<template name="select_service">
-  <select class="form-control">
-    <option value="instr">Add a Category</option>
-    {{#each other_services}}
-    <option value="{{_id}}">{{name}}</option>
-    {{/each}}
-  </select>
 </template>

@@ -22,15 +22,12 @@ Template.category_input.helpers({
   category_dropdown: function() {
     var field = this.field;
     return {
-      list: this.values.map(function(value) {
-        return {id:value, field:field, value:value, remove_key:'remove_category_input_from_location'}
-      }),
-      all: this.list.map(function(value) {
-        return {id:value, field:field, value:value, remove_key:'remove_category_input_from_location'}
-      }),
       reactive_save_key: 'add_category_input_to_location',
       field:field,
-      location_id:this.location_id
+      no_span_size:true,
+      location_id:this.location_id,
+      values:this.values, //TODO: remove this
+      list:this.list
     }
   },
   checked: function() {
@@ -165,8 +162,9 @@ Template.editor.helpers({
   resources: function() {
     var unique_resource_ids = [];
     var memo_resource_ids = {};
-    if (Session.get('county')) {
-      Locations.find({needs_edit:true, service_area:Session.get('county')._id}, {fields:{resource_id:true}}).forEach(function(location) {
+    var county = Session.get('county');
+    if (county) {
+      Locations.find({needs_edit:true, service_area:county._id}, {fields:{resource_id:true}}).forEach(function(location) {
         var resource_id = location.resource_id;
         if (!memo_resource_ids.hasOwnProperty(resource_id)) {
           unique_resource_ids.push(resource_id);
@@ -176,7 +174,7 @@ Template.editor.helpers({
 
       return Resources.find(
         {_id:{$in:unique_resource_ids}},
-        {limit:MAX_RESOURCES, skip:Session.get('skip_resource_page')*MAX_RESOURCES});
+        {fields:{_id:true, name:true}, limit:MAX_RESOURCES, skip:Session.get('skip_resource_page')*MAX_RESOURCES});
     }
   },
   show_edit_resource: function() {
@@ -297,15 +295,16 @@ Template.edit_dropdown.helpers({
     return this.span_size != null;
   },
   list: function() {
-    return this.list;
+    return get_list_for_dropdown(this.field, this.edit, this);
   },
   other_list: function() {
-    if (this.all && this.list) {
-      return array_diff_ids(this.all, this.list);
-    }
-    return this.all;
+    return get_all_for_dropdown(this.field, this);
   }
 });
+
+Template.edit_dropdown.rendered = function() {
+  console.log('rendering e_d');
+}
 
 Template.edit_field.helpers({
   field_class: function() {
@@ -398,20 +397,13 @@ Template.edit_languages.helpers({
 
 Template.edit_location.helpers({
   accessibility_dropdown: function() {
-    var _all = ['blind', 'deaf', 'elevator', 'parking', 'ramp', 'restroom', 'wheelchair'];
-    var list = this.accessibility || [];
     return {
-      list: list.map(function(value) {
-        return {id:value, value:value, remove_key:'remove_access_from_location'}
-      }),
-      all: _all.map(function(value) {
-        return {id:value, value:value, remove_key:'remove_access_from_location'}
-      }),
       reactive_save_key: 'add_access_to_location',
       span_size:3,
       span_diff:9,
       field:"Accessibility",
-      location_id:this._id
+      location_id:this._id,
+      edit:true
     }
   },
   addresses: function() {
@@ -543,24 +535,12 @@ Template.edit_location.helpers({
   },
   services_dropdown: function() {
     return {
-      list: Services.find({_id:{$in:this.sub_service_ids}},
-                          {sort:{name:1},
-                           fields:{_id:true, name:true}
-                          }).map(function(service) {
-        return {id:service._id, value:service.name,
-                remove_key:'remove_service_from_location'}
-      }),
-      all: Services.find({parents:{$exists:true, $ne:null}},
-                         {sort:{name:1},
-                          fields:{_id:true, name:true}
-                         }).map(function(service) {
-        return {id:service._id, value:service.name, remove_key:'remove_service_from_location'}
-      }),
       reactive_save_key: 'add_service_to_location',
       span_size:3,
       span_diff:9,
       field:"Categories",
-      location_id:this._id
+      location_id:this._id,
+      edit:true
     }
   },
   url: function() {
@@ -571,6 +551,10 @@ Template.edit_location.helpers({
     }
   },
 });
+
+Template.edit_location.rendered = function() {
+  console.log('rendered the whole edit_location');
+}
 
 Template.edit_phone.helpers({
   field_class: function() {
@@ -632,6 +616,10 @@ Template.edit_toggle.events({
       current, value, id, is_category_specific
     );
     set_textarea_row_number(id, value, input);
+  },
+  'focus textarea': function(e, tmpl) {
+    var input = $('#' + this.id);
+    set_textarea_row_number(this.id, input.val(), input);
   }
 });
 
@@ -644,15 +632,6 @@ Template.edit_toggle.helpers({
     return width;
   },
 });
-
-Template.edit_toggle.rendered = function() {
-  if (this.data.location_id) {
-    //TODO: Wow this is a bad idea. Renderssssss like mad
-    console.log('rendering edit_toggle')
-    var input = $('#' + this.data.id);
-    set_textarea_row_number(this.data.id, input.val(), input);
-  }
-}
 
 Template.message.helpers({
   color: function() {
@@ -722,19 +701,12 @@ Template.new_resource.events({
 
 Template.new_resource.helpers({
   accessibility_dropdown: function() {
-    var _all = ['blind', 'deaf', 'elevator', 'parking', 'ramp', 'restroom', 'wheelchair'];
-    var list = Session.get('track_inputs')['accessibility'] || [];
     return {
-      list: list.map(function(value) {
-        return {id:value, value:value, remove_key: 'remove_access_from_location'};
-      }),
-      all: _all.map(function(value) {
-        return {id:value, value:value, remove_key: 'remove_access_from_location'};
-      }),
       reactive_save_key: 'add_access_to_location',
       span_size:3,
       span_diff:9,
-      field:"Accessibility"
+      field:"Accessibility",
+      edit:false
     }
   },
   audience: function() {
@@ -809,26 +781,12 @@ Template.new_resource.helpers({
     return {field:'Short Desc', id:'short_desc'}
   },
   services_dropdown: function() {
-    var list = Session.get('track_inputs')['categories'] || [];
     return {
-      list: Services.find({_id:{$in:list}},
-                          {sort:{name:1},
-                           fields:{_id:true, name:true}
-                          }).map(function(service) {
-        return {id:service._id, value:service.name,
-                remove_key:'remove_service_from_location'}
-      }),
-      all: Services.find({parents:{$exists:true, $ne:null}},
-                         {sort:{name:1},
-                          fields:{_id:true, name:true}
-                         }).map(function(service) {
-        return {id:service._id, value:service.name,
-                remove_key: 'remove_service_from_location'};
-      }),
       reactive_save_key: 'add_service_to_location',
       span_size:3,
       span_diff:9,
-      field:"Categories"
+      field:"Categories",
+      edit:false
     }
   },
   url: function() {
@@ -1083,4 +1041,78 @@ var trim = function(current) {
     return "";
   }
   return current.trim();
+}
+
+var get_all_services = function() {
+  return Services.find(
+    {parents:{$exists:true, $ne:null}},
+    {reactive:false, sort:{name:1},
+     fields:{_id:true, name:true}
+    }).map(function(service) {
+      return {id:service._id, value:service.name, remove_key:'remove_service_from_location'}
+    });
+}
+
+var get_all_for_dropdown = function(key, dict) {
+  key = key.toLowerCase()
+  console.log(key);
+  if (key == 'accessibility') {
+    var all = ['blind', 'deaf', 'elevator', 'parking', 'ramp', 'restroom', 'wheelchair'];
+    return all.map(function(value) {
+      return {id:value, value:value, remove_key: 'remove_access_from_location'}
+    });
+    console.log(all);
+  } else if (key == 'categories') {
+    var all = Session.get('all_services');
+    if (!all || all.length == 0) {
+      all = get_all_services();
+      Session.set('all_services', all);
+    }
+    return all;
+  } else {
+    return dict.list.map(function(value) {
+        return {id:value, field:dict.field, value:value, remove_key:'remove_category_input_from_location'}
+    })
+  }
+}
+
+var get_list_for_dropdown = function(key, edit, obj) {
+  key = key.toLowerCase()
+  console.log('list: ' + key);
+  if (key == 'accessibility') {
+    if (!edit) {
+      var list = Session.get('track_inputs')['accessibility'] || [];
+    } else {
+      var list = Locations.findOne({_id:obj.location_id}).accessibility || [];
+    }
+    return list.map(function(value) {
+      return {id:value, value:value, remove_key: 'remove_access_from_location'};
+    })
+  } else if (key == 'categories') {
+    if (edit) {
+      var location = Locations.findOne({_id:obj.location_id});
+      return Services.find(
+        {_id:{$in:location.sub_service_ids}},
+        {sort:{name:1},
+         fields:{_id:true, name:true}
+        }).map(function(service) {
+          return {id:service._id, value:service.name,
+                  remove_key:'remove_service_from_location'}
+        })
+    } else {
+      var list = Session.get('track_inputs')['categories'] || [];
+      return Services.find(
+        {_id:{$in:list}},
+        {sort:{name:1},
+         fields:{_id:true, name:true}
+        }).map(function(service) {
+          return {id:service._id, value:service.name,
+                  remove_key:'remove_service_from_location'}
+        })
+    }
+  } else {
+    return obj.values.map(function(value) {
+      return {id:value, field:obj.field, value:value, remove_key:'remove_category_input_from_location'}
+    })
+  }
 }
