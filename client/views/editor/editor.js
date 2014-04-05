@@ -1,4 +1,4 @@
-MAX_RESOURCES = 15;
+MAX_RESOURCES = 30;
 TOTAL_NEEDS_EDIT = null;
 
 Template.category_input.events({

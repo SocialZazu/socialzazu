@@ -139,3 +139,8 @@ session_var_push = function(session_key, value) {
     Session.set(session_key, vals);
   }
 }
+
+shuffle = function(o){
+    for(var j, x, i = o.length; i; j = Math.floor(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
+    return o;
+};
