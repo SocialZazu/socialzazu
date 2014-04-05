@@ -174,16 +174,9 @@
       {{/isolate}}
       {{/each}}
 
-      {{#constant}}
       <div class="row-fluid" style="margin-top:{{margin_top}}">
-        <select class="form-control" field="{{field}}">
-          <option value="instr">Select From List</option>
-          {{#each other_list}}
-          <option value="{{id}}">{{capitalize value}}</option>
-          {{/each}}
-        </select>
+        {{> select2 choices}}
       </div>
-      {{/constant}}
 
       {{else}}
       {{#constant}}

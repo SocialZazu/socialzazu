@@ -281,8 +281,8 @@ Template.edit_dropdown.events({
   'click .remove_dropdown': function(e, tmpl) {
     var a = $(e.target).closest('a');
     var id = a.attr('id');
-    var field = a.attr('field');
     var remove_key = a.attr('remove_key')
+    var field = tmpl.data.field.toLowerCase();
     save_reactive_data(remove_key, field, id);
   }
 });
@@ -297,14 +297,18 @@ Template.edit_dropdown.helpers({
   list: function() {
     return get_list_for_dropdown(this.field, this.edit, this);
   },
-  other_list: function() {
-    return get_all_for_dropdown(this.field, this);
+  choices: function() {
+    return {
+      choices:get_all_for_dropdown(this.field, this),
+      id:this.field.toLowerCase(),
+      reactive_save_key:this.reactive_save_key
+    }
   }
 });
 
-Template.edit_dropdown.rendered = function() {
-  console.log('rendering e_d');
-}
+// Template.edit_dropdown.rendered = function() {
+//   console.log('rendering e_d');
+// }
 
 Template.edit_field.helpers({
   field_class: function() {
@@ -552,9 +556,9 @@ Template.edit_location.helpers({
   },
 });
 
-Template.edit_location.rendered = function() {
-  console.log('rendered the whole edit_location');
-}
+// Template.edit_location.rendered = function() {
+//   console.log('rendered the whole edit_location');
+// }
 
 Template.edit_phone.helpers({
   field_class: function() {
@@ -1047,21 +1051,19 @@ var get_all_services = function() {
   return Services.find(
     {parents:{$exists:true, $ne:null}},
     {reactive:false, sort:{name:1},
-     fields:{_id:true, name:true}
+     fields:{_id:true, name:true, parents:true}
     }).map(function(service) {
-      return {id:service._id, value:service.name, remove_key:'remove_service_from_location'}
+      return {id:service._id, text:service.name, remove_key:'remove_service_from_location', parents:service.parents}
     });
 }
 
 var get_all_for_dropdown = function(key, dict) {
   key = key.toLowerCase()
-  console.log(key);
   if (key == 'accessibility') {
     var all = ['blind', 'deaf', 'elevator', 'parking', 'ramp', 'restroom', 'wheelchair'];
     return all.map(function(value) {
-      return {id:value, value:value, remove_key: 'remove_access_from_location'}
+      return {id:value, text:value, remove_key: 'remove_access_from_location'}
     });
-    console.log(all);
   } else if (key == 'categories') {
     var all = Session.get('all_services');
     if (!all || all.length == 0) {
@@ -1071,14 +1073,13 @@ var get_all_for_dropdown = function(key, dict) {
     return all;
   } else {
     return dict.list.map(function(value) {
-        return {id:value, field:dict.field, value:value, remove_key:'remove_category_input_from_location'}
+        return {id:value, field:dict.field, text:value, remove_key:'remove_category_input_from_location'}
     })
   }
 }
 
 var get_list_for_dropdown = function(key, edit, obj) {
   key = key.toLowerCase()
-  console.log('list: ' + key);
   if (key == 'accessibility') {
     if (!edit) {
       var list = Session.get('track_inputs')['accessibility'] || [];
@@ -1115,4 +1116,38 @@ var get_list_for_dropdown = function(key, edit, obj) {
       return {id:value, field:obj.field, value:value, remove_key:'remove_category_input_from_location'}
     })
   }
+}
+
+Template.select2.rendered = function() {
+  var data = [];
+  var id = this.data.id;
+  var reactive_save_key = this.data.reactive_save_key;
+  if (this.data.choices.length == 0) {
+    return;
+  }
+  if (this.data.choices[0].remove_key == "remove_service_from_location") {
+    var parents_map = {};
+    Services.find({parents:null}, {fields:{name:true, _id:true}}).forEach(function(parent) {
+      parents_map[parent._id] = {text:parent.name, children:[]}
+    });
+    this.data.choices.forEach(function(child) {
+      child.parents.forEach(function(parent_id) {
+        if (parent_id in parents_map) {
+          parents_map[parent_id]['children'].push(child);
+        }
+      });
+    });
+    for (var key in parents_map) {
+      data.push(parents_map[key]);
+    }
+  } else {
+    data = this.data.choices;
+  }
+  $('#select2_' + id).select2({
+    data:data,
+    width:'resolve',
+    placeholder:'Select From List'
+  }).on('select2-selecting', function(e) {
+    save_reactive_data(reactive_save_key, id, e.object.id);
+  });
 }
