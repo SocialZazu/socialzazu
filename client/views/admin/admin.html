@@ -16,6 +16,36 @@
       <button type="button" class="btn btn-primary" id="make_editor">Make Editor</button>
     </div>
   </div>
+  <hr>
+  <div class="row-fluid">
+    <input id="add_parent_category" type="text" placeholder="Add Parent Category" class="form-control left" style="margin-right:10px">
+    <button type="button" id="submit_parent_category" class="btn btn-primary">
+      Submit Parent
+    </button>
+  </div>
+  <hr>
+  <div class="row-fluid">
+    <input id="add_child_category" type="text" placeholder="Add Child Category" class="form-control left" style="margin-right:10px">
+    <div class="left" style="margin-right:10px">
+      {{selected_service_name}}
+    </div>
+    <input id="search_services" type="text" placeholder="Search Service" class="left" style="margin-right:10px">
+    <button type="button" id="submit_child_category" class="btn btn-primary left">
+      Submit Child
+    </button>
+  </div>
+  <div class="row-fluid">
+    <div class="span8">
+      {{#each child_services}}
+       {{name}} |
+      {{/each}}
+    </div>
+    <div class="span4">
+      {{#each parent_services}}
+      {{name}} |
+      {{/each}}
+    </div>
+  </div>
 </template>
 
 <template name="user_email_search">

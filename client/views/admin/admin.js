@@ -9,8 +9,17 @@ Template.admin.destroyed = function() {
 }
 
 Template.admin.helpers({
+  child_services: function() {
+    return Services.find({parents:{$exists:true, $ne:null}}, {sort:{created_time:1}});
+  },
+  parent_services: function() {
+    return Services.find({'children.0':{$exists:true}}, {sort:{created_time:1}});
+  },
   message: function() {
     return Session.get('message') || ''
+  },
+  selected_service_name: function() {
+    return Session.get('selected_service_name') || 'None Selected'
   },
   user_datums: function() {
     return {
@@ -39,9 +48,44 @@ Template.admin.events({
     } else {
       Meteor.call('make_editor', user._id, username);
     }
+  },
+  'click #submit_parent_category': function(e, tmpl) {
+    var parent = $('#add_parent_category').val();
+    if (parent && parent != '') {
+      Meteor.call('add_parent_service', parent);
+    }
+  },
+  'click #submit_child_category': function(e, tmpl) {
+    var child = $('#add_child_category').val()
+    var parent_id = Session.get('selected_service_id');
+    if (child && parent_id && child != '' && parent_id != '') {
+      Meteor.call('add_child_service', child, parent_id);
+    }
   }
 });
 
+Template.admin.rendered = function() {
+  var data = Services.find({parents:null}).map(function(service) {
+    return {value:service.name, name_route:service.name_route, id:service._id}
+  });
+
+  if (data && data.length > 0) {
+    var services_datums = new Bloodhound({
+      datumTokenizer: function(d) { return Bloodhound.tokenizers.whitespace(d.value); },
+      queryTokenizer: Bloodhound.tokenizers.whitespace,
+      local: data
+    });
+    services_datums.initialize();
+
+    $('#search_services').typeahead(null, {
+      displayKey: 'value',
+      source: services_datums.ttAdapter()
+    }).on('typeahead:selected', function(event, datum) {
+      Session.set('selected_service_id', datum.id);
+      Session.set('selected_service_name', datum.value)
+    });
+  }
+}
 
 Template.user_email_search.rendered = function() {
   var data = this.data.datums;
@@ -61,4 +105,3 @@ Template.user_email_search.rendered = function() {
 
   $('.search-query.tt-hint').width('inherit');
 }
-
