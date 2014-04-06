@@ -13,7 +13,7 @@ Template.admin.helpers({
     return Services.find({parents:{$exists:true, $ne:null}}, {sort:{created_time:1}});
   },
   parent_services: function() {
-    return Services.find({'children.0':{$exists:true}}, {sort:{created_time:1}});
+    return Services.find({children:{$exists:true}}, {sort:{created_time:1}});
   },
   message: function() {
     return Session.get('message') || ''
@@ -65,7 +65,7 @@ Template.admin.events({
 });
 
 Template.admin.rendered = function() {
-  var data = Services.find({parents:null}).map(function(service) {
+  var data = Services.find({children:{$exists:true}}).map(function(service) {
     return {value:service.name, name_route:service.name_route, id:service._id}
   });
 

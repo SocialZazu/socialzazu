@@ -94,7 +94,7 @@ Meteor.publish('sub_services', function() {
 });
 
 Meteor.publish('super_services', function() {
-  return Services.find({'children.1':{$exists:true}});
+  return Services.find({children:{$exists:true}});
 });
 
 //TODO: change to incorporate some metric
